@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>神谷町駅からの最適住宅地検索</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #1a1d2e;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 56px 24px 80px;
+      color: #e0e4eb;
+      background-color: #1a1d2e;
+    }
+    h1 {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      letter-spacing: 0.06em;
+      color: #5fb3d3;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .tables {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      width: min(1100px, 100%);
+    }
+    .table-card {
+      flex: 1 1 320px;
+      background: #2a2d3e;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      padding: 24px;
+      border: 1px solid #3a3d4e;
+      display: flex;
+      flex-direction: column;
+    }
+    .table-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .table-card-top {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .table-card-left {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+    }
+    .table-card-right {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+    }
+    .empty-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-radius: 8px;
+      min-height: 200px;
+      width: 100%;
+    }
+    .table-card-bottom {
+      width: 100%;
+    }
+    .search-button {
+      background: #5fb3d3;
+      border: 1px solid #5fb3d3;
+      color: #1a1d2e;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 16px 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      height: fit-content;
+    }
+    .search-button:hover {
+      background: #7fc3e3;
+      border-color: #7fc3e3;
+    }
+    .search-button:active {
+      background: #4fa3c3;
+    }
+    .room-version-title {
+      font-size: 2rem;
+      color: #5fb3d3;
+      text-align: center;
+      margin-bottom: 16px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .table-card h2 {
+      font-size: 1.1rem;
+      color: #5fb3d3;
+      margin-bottom: 16px;
+    }
+    .property-search-text {
+      font-size: 1.1rem;
+      color: #5fb3d3;
+      margin-top: 20px;
+      margin-bottom: 16px;
+    }
+    .suumo-iframe-wrapper {
+      width: 100%;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .suumo-iframe-container {
+      width: 100%;
+      border: 1px solid #3a3d4e;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a1d2e;
+      position: relative;
+    }
+    .suumo-iframe-container iframe {
+      width: 100%;
+      height: 800px;
+      border: none;
+      display: block;
+    }
+    .iframe-fixed-box {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 440px;
+      min-height: 40px;
+      padding: 16px;
+      background: rgba(42, 45, 62, 0.95);
+      border: 1px solid #3a3d4e;
+      border-radius: 4px;
+      color: #e0e4eb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+    }
+    .fixed-box-title {
+      font-weight: 600;
+      color: #5fb3d3;
+      margin-bottom: 4px;
+      font-size: 1.2rem;
+    }
+    .fixed-box-result-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #5fb3d3;
+      text-align: center;
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(95, 179, 211, 0.1);
+      border-radius: 4px;
+    }
+    .fixed-box-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .fixed-box-label {
+      font-size: 1rem;
+      color: #e0e4eb;
+    }
+    .fixed-box-input {
+      background: #1a1d2e;
+      border: 1px solid #3a3d4e;
+      border-radius: 4px;
+      padding: 8px 10px;
+      color: #e0e4eb;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .fixed-box-input:focus {
+      outline: none;
+      border-color: #5fb3d3;
+    }
+    .fixed-box-input::placeholder {
+      color: #888;
+    }
+    .fixed-box-note {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 2px;
+    }
+    .fixed-box-error {
+      font-size: 0.85rem;
+      color: #ff6b6b;
+      margin-top: 2px;
+      display: none;
+    }
+    .fixed-box-error.active {
+      display: block;
+    }
+    .fixed-box-result {
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #3a3d4e;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .fixed-box-calculate-button {
+      background: #5fb3d3;
+      border: 1px solid #5fb3d3;
+      color: #1a1d2e;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+    .fixed-box-calculate-button:hover {
+      background: #7fc3e3;
+      border-color: #7fc3e3;
+    }
+    .fixed-box-calculate-button:active {
+      background: #4fa3c3;
+    }
+    .fixed-box-result-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #5fb3d3;
+      text-align: center;
+      min-height: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #3a3d4e;
+      text-align: left;
+    }
+    th {
+      color: #5fb3d3;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #3a3d4e;
+      background: #1a1d2e;
+      font-size: 0.95rem;
+      color: #e0e4eb;
+    }
+    .monthly-income-input {
+      margin-bottom: 20px;
+    }
+    .monthly-income-input label {
+      display: block;
+      margin-bottom: 8px;
+      color: #5fb3d3;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .monthly-income-input-wrapper {
+      position: relative;
+      width: 25%;
+      display: inline-block;
+    }
+    .monthly-income-input-wrapper::after {
+      content: '';
+      position: absolute;
+      right: -15px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: #3a3d4e;
+      height: 100%;
+    }
+    .monthly-income-input input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #3a3d4e;
+      background: #1a1d2e;
+      color: #e0e4eb;
+      font-size: 0.95rem;
+    }
+    .monthly-income-input input:focus {
+      outline: none;
+      border-color: #5fb3d3;
+      box-shadow: 0 0 0 2px rgba(95, 179, 211, 0.2);
+    }
+    .monthly-income-input input::placeholder {
+      color: #888;
+    }
+    .monthly-income-error {
+      color: #ff4444;
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: none;
+    }
+    .monthly-income-error.active {
+      display: block;
+    }
+    .setting-button {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid #3a3d4e;
+      background: linear-gradient(135deg, #3a4455, #2a3441);
+      color: #e0e4eb;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .setting-arrow {
+      position: absolute;
+      right: -30px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 10px solid #e0e4eb;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
+    .minute-salary-display {
+      color: #e0e4eb;
+      font-size: 1.3rem;
+      margin-left: 40px;
+      display: block;
+    }
+    .minute-salary-note {
+      color: #888;
+      font-size: 0.7rem;
+      margin-left: 40px;
+      margin-top: 4px;
+      display: block;
+    }
+    .setting-button:hover {
+      background: linear-gradient(135deg, #4a5568, #3a4455);
+      border-color: #5fb3d3;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .setting-button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-radius: 14px;
+      padding: 24px;
+      display: none;
+    }
+    .chart-container.active {
+      display: block;
+    }
+    .chart-container canvas {
+      max-height: 400px;
+    }
+    #salary-chart-container {
+      margin-top: 20px;
+      padding-top: 40px;
+      min-height: 500px;
+    }
+    #salary-chart-container canvas {
+      max-height: 500px;
+    }
+    .commute-salary-table-container {
+      flex: 0 0 40%;
+      margin-top: 20px;
+      padding-top: 0;
+      display: block;
+      max-height: 500px;
+      overflow-y: auto;
+      align-self: flex-start;
+      position: relative;
+    }
+    .commute-salary-table-header {
+      display: flex;
+      background: #1a1d2e !important;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border: 1px solid #3a3d4e;
+      border-bottom: 2px solid #3a3d4e;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      margin-bottom: 0;
+    }
+    .commute-salary-table-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #1a1d2e;
+      z-index: -1;
+    }
+    .commute-salary-table-header-cell {
+      flex: 1;
+      padding: 12px 8px;
+      color: #5fb3d3;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: left;
+      border-right: 1px solid #3a3d4e;
+      box-sizing: border-box;
+    }
+    .commute-salary-table-header-cell:last-child {
+      border-right: none;
+      text-align: right;
+    }
+    .commute-salary-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+      table-layout: fixed;
+    }
+    .commute-salary-table td {
+      padding: 10px 8px;
+      color: #e0e4eb;
+      text-align: left;
+      border-bottom: 1px solid #3a3d4e;
+      border-right: 1px solid #3a3d4e;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      width: 50%;
+    }
+    .commute-salary-table td:first-child {
+      width: 50%;
+    }
+    .commute-salary-table td:last-child {
+      border-right: none;
+      text-align: right;
+      width: 50%;
+    }
+    .commute-salary-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    #real-rent-chart-container {
+      margin-top: 20px;
+      padding-top: 40px;
+      min-height: 500px;
+    }
+    #real-rent-chart-container canvas {
+      max-height: 500px;
+    }
+    .real-rent-table-container {
+      flex: 0 0 40%;
+      margin-top: 20px;
+      padding-top: 0;
+      display: block;
+      max-height: 500px;
+      overflow-y: auto;
+      align-self: flex-start;
+      position: relative;
+    }
+    .real-rent-table-header {
+      display: flex;
+      background: #1a1d2e !important;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border: 1px solid #3a3d4e;
+      border-bottom: 2px solid #3a3d4e;
+      border-radius: 8px 8px 0 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      margin-bottom: 0;
+    }
+    .real-rent-table-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #1a1d2e;
+      z-index: -1;
+    }
+    .real-rent-table-header-cell {
+      flex: 1;
+      padding: 12px 8px;
+      color: #5fb3d3;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: left;
+      border-right: 1px solid #3a3d4e;
+      box-sizing: border-box;
+    }
+    .real-rent-table-header-cell:last-child {
+      border-right: none;
+      text-align: right;
+    }
+    .real-rent-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      overflow: hidden;
+      table-layout: fixed;
+    }
+    .real-rent-table td {
+      padding: 10px 8px;
+      color: #e0e4eb;
+      text-align: left;
+      border-bottom: 1px solid #3a3d4e;
+      border-right: 1px solid #3a3d4e;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      width: 50%;
+    }
+    .real-rent-table td:first-child {
+      width: 50%;
+    }
+    .real-rent-table td:last-child {
+      border-right: none;
+      text-align: right;
+      width: 50%;
+    }
+    .real-rent-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .real-rent-label-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      color: #5fb3d3;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 10;
+    }
+    .commute-salary-label-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      color: #5fb3d3;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 10;
+    }
+    .transfer-legend {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(42, 45, 62, 0.9);
+      border: 1px solid #3a3d4e;
+      border-radius: 4px;
+      padding: 4px 6px;
+      z-index: 10;
+      display: none;
+    }
+    .transfer-legend.active {
+      display: block;
+    }
+    .transfer-legend-title {
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: #5fb3d3;
+      margin-bottom: 3px;
+      text-align: center;
+    }
+    .transfer-legend-items {
+      display: flex;
+      flex-direction: row;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .transfer-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.55rem;
+      color: #e0e4eb;
+    }
+    .transfer-legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .transfers-table-container {
+      margin-top: 20px;
+      width: 100%;
+      display: none;
+    }
+    .transfers-table-container.active {
+      display: block;
+    }
+    .transfers-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .transfers-table thead {
+      background: #1a1d2e;
+    }
+    .transfers-table th {
+      padding: 12px 8px;
+      color: #5fb3d3;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      border-bottom: 2px solid #3a3d4e;
+      border-right: 1px solid #3a3d4e;
+    }
+    .transfers-table th:last-child {
+      border-right: none;
+    }
+    .transfers-table td {
+      padding: 10px 8px;
+      color: #e0e4eb;
+      text-align: center;
+      border-bottom: 1px solid #3a3d4e;
+      border-right: 1px solid #3a3d4e;
+      font-size: 0.9rem;
+    }
+    .transfers-table td:last-child {
+      border-right: none;
+    }
+    .transfers-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .station-checkboxes {
+      margin-top: 20px;
+      padding: 16px;
+      background: #2a2d3e;
+      border: 1px solid #3a3d4e;
+      border-radius: 8px;
+      display: none;
+      width: 100%;
+    }
+    .station-checkboxes.active {
+      display: block;
+    }
+    .station-checkboxes h3 {
+      font-size: 0.95rem;
+      color: #5fb3d3;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .station-checkbox-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .station-checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .station-checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #5fb3d3;
+    }
+    .station-checkbox-item label {
+      color: #e0e4eb;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="chart_code.js"></script>
+  <script src="alert.js"></script>
+  <script src="change_commute_salary.js"></script>
+  <script src="real_rent_fee.js"></script>
+</head>
+<body>
+  <h1>神谷町駅からの最適住宅地検索</h1>
+  <section class="tables">
+    <article class="table-card">
+      <div class="room-version-title">1ルームver.</div>
+      <h2>鉄道・沿線ごとの家賃相場/神谷町駅までの時間及び乗換回数</h2>
+      <div class="monthly-income-input">
+        <div>
+          <label for="monthly-income">月収を入力（円）</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="monthly-income-input-wrapper">
+              <input type="text" id="monthly-income" placeholder="例: 500000">
+              <div class="monthly-income-error" id="monthly-income-error"></div>
+            </div>
+            <div style="position: relative; display: inline-block;">
+              <button type="button" id="setting-button" class="setting-button">設定</button>
+              <span class="setting-arrow"></span>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+              <div class="minute-salary-display active" id="minute-salary-display">あなたの分給：</div>
+              <div class="minute-salary-note">月の出勤日数：20日　日の労働時間：7時間45分　と仮定</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <table>
+        <tbody>
+          <tr>
+            <th>鉄道</th>
+            <td>
+              <select id="railway-select">
+                <option value="">選択してください</option>
+                <option>JR</option>
+                <option>東京メトロ</option>
+                <option>西武鉄道</option>
+                <!-- <option>東武鉄道</option>
+                <option>東急電鉄</option>
+                <option>都営地下鉄</option> -->
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th>沿線</th>
+            <td>
+              <select id="line-select">
+                <option value="">選択してください</option>
+                <option>a</option>
+                <option>b</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-card-content">
+        <div class="table-card-top">
+          <div class="table-card-left">
+            <div class="station-checkboxes" id="station-checkboxes"></div>
+          </div>
+          <div class="table-card-right">
+            <div class="empty-box" id="empty-box">
+              <div style="color: #e0e4eb; line-height: 1.8; text-align: center; padding-top: 60px;">
+                駅ごとの詳細情報を表示します
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="table-card-bottom">
+          <div class="chart-container" id="chart-container">
+            <div class="transfer-legend" id="transfer-legend"></div>
+            <canvas id="myChart"></canvas>
+          </div>
+          <div style="display: flex; gap: 20px; width: 100%;">
+            <div class="chart-container" id="salary-chart-container" style="flex: 0 0 55%;">
+              <div class="commute-salary-label-top" id="commute-salary-label-top">通勤時間の分給換算</div>
+              <canvas id="salaryChart"></canvas>
+            </div>
+            <div class="commute-salary-table-container" id="commute-salary-table-container"></div>
+          </div>
+          <div style="display: flex; gap: 20px; width: 100%;">
+            <div class="chart-container" id="real-rent-chart-container" style="flex: 0 0 55%;">
+              <div class="real-rent-label-top" id="real-rent-label-top">家賃相場と通勤時間を考慮した実質家賃</div>
+              <canvas id="realRentChart"></canvas>
+            </div>
+            <div class="real-rent-table-container" id="real-rent-table-container"></div>
+          </div>
+          <div class="property-search-text">物件を探す</div>
+          <div class="suumo-iframe-wrapper">
+            <div class="iframe-fixed-box">
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">家賃を入力</label>
+                <input type="text" class="fixed-box-input" id="rent-input" placeholder="例: 50000">
+                <div class="fixed-box-error" id="rent-input-error"></div>
+              </div>
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">対象駅までの時間（分）</label>
+                <input type="text" class="fixed-box-input" id="time-input" placeholder="例: 30">
+                <div class="fixed-box-note">＊徒歩での所要時間を想定</div>
+                <div class="fixed-box-error" id="time-input-error"></div>
+              </div>
+              <button type="button" class="search-button" id="search-button">検索</button>
+              <div class="fixed-box-title">実質家賃の算出</div>
+              <div class="fixed-box-result-value" id="real-rent-result">-</div>
+            </div>
+            <div class="suumo-iframe-container">
+              <iframe src="https://suumo.jp/chintai/soba/tokyo/ensen/" width="100%" height="800" frameborder="0" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+  <script>
+    const railwaySelect = document.getElementById('railway-select');
+    const lineSelect = document.getElementById('line-select');
+    const chartContainer = document.getElementById('chart-container');
+    const stationCheckboxes = document.getElementById('station-checkboxes');
+    let myChart = null;
+
+    const LINE_OPTIONS = {
+      JR: ['JR山手線', 'JR京浜東北線','JR東海道本線','JR常磐線','JR南武線','JR横浜線','JR横須賀線',
+      'JR中央線','JR青梅線','JR五日市線','JR武蔵野線','JR八高線','JR埼京線','JR高崎線','JR宇都宮線','JR総武線','JR総武線快速','JR京葉線','湘南新宿ライン宇須','湘南新宿ライン高海'],
+      '東京メトロ': ['東京メトロ銀座線','東京メトロ丸ノ内線','東京メトロ日比谷線','東京メトロ東西線','東京メトロ有楽町線','東京メトロ半蔵門線','東京メトロ千代田線','東京メトロ南北線','東京メトロ副都心線'],
+      '西武鉄道': ['西武有楽町線','西武池袋線','西武新宿線','西武池袋線','西武拝島線','西武山口線','西武国分寺線','西武豊島線','西武多摩湖線','西武西武園線','西武多摩川線'],
+      // '東武鉄道': ['東武東上線', '東武スカイツリーライン', '東武日光線', '東武亀戸線', '東武亀戸線'],
+      // '東急電鉄': ['東急東横線', '東急田園都市線', '東急多摩川線', '東急大井町線', '東急大井町線'],
+      // '都営地下鉄': ['都営新宿線', '都営大江戸線', '都営三田線', '都営浅草線', '都営浅草線']
+    };
+
+    function renderLineOptions(railway) {
+      if (!railway) {
+        lineSelect.innerHTML = '<option value="">選択してください</option>';
+        return;
+      }
+      const options = LINE_OPTIONS[railway] || [];
+      lineSelect.innerHTML = '<option value="">選択してください</option>' + options
+        .map((line) => `<option value="${line}">${line}</option>`)
+        .join('');
+    }
+
+    // 駅のチェックボックスを表示
+    async function displayStationCheckboxes() {
+      const railway = railwaySelect.value;
+      const line = lineSelect.value;
+
+      if (!railway || !line || railway === '' || line === '') {
+        stationCheckboxes.classList.remove('active');
+        return;
+      }
+
+      // fix_data.jsonを読み込む
+      const data = await loadFixData();
+      if (!data) {
+        stationCheckboxes.classList.remove('active');
+        return;
+      }
+
+      // チャートと同じ順序で駅のリストを取得（extractDataを使用）
+      const extracted = extractData(data, railway, line);
+      const stations = extracted.stations;
+
+      if (stations.length === 0) {
+        stationCheckboxes.classList.remove('active');
+        return;
+      }
+
+      // チェックボックスを生成
+      const html = `
+        <h3>駅を選択</h3>
+        <div class="station-checkbox-list">
+          ${stations.map((station, index) => `
+            <div class="station-checkbox-item">
+              <input type="checkbox" id="station-${index}" value="${station}">
+              <label for="station-${index}">${station}</label>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      stationCheckboxes.innerHTML = html;
+      stationCheckboxes.classList.add('active');
+
+      // チェックボックスが1つだけ選択できるようにイベントリスナーを追加
+      const checkboxes = stationCheckboxes.querySelectorAll('input[type="checkbox"]');
+      const emptyBox = document.getElementById('empty-box');
+      
+      // 初期メッセージを表示
+      emptyBox.innerHTML = '<div style="color: #e0e4eb; line-height: 1.8; text-align: center; padding-top: 60px;">駅ごとの詳細情報を表示します</div>';
+      
+      checkboxes.forEach((checkbox, index) => {
+        checkbox.addEventListener('change', async function() {
+          if (this.checked) {
+            // 他のチェックボックスを全て外す
+            checkboxes.forEach(cb => {
+              if (cb !== this) {
+                cb.checked = false;
+              }
+            });
+
+            // 選択された駅の情報を表示
+            const selectedStation = this.value;
+            await displayStationInfo(selectedStation);
+            
+            // チャートの棒グラフの枠線をハイライト
+            highlightChartBar(index);
+          } else {
+            // チェックが外された場合、初期メッセージを表示
+            emptyBox.innerHTML = '<div style="color: #e0e4eb; line-height: 1.8; text-align: center; padding-top: 60px;">駅ごとの詳細情報を表示します</div>';
+            
+            // チャートのハイライトを解除
+            resetChartHighlight();
+          }
+        });
+      });
+    }
+
+    // 駅の詳細情報を表示
+    async function displayStationInfo(station) {
+      const emptyBox = document.getElementById('empty-box');
+      const railway = railwaySelect.value;
+      const line = lineSelect.value;
+
+      if (!station || !railway || !line) {
+        emptyBox.innerHTML = '';
+        return;
+      }
+
+      // fix_data.jsonを読み込む
+      const data = await loadFixData();
+      if (!data) {
+        emptyBox.innerHTML = '<p style="color: #e0e4eb;">データの読み込みに失敗しました。</p>';
+        return;
+      }
+
+      // 駅の詳細情報を取得
+      const details = getStationDetails(data, railway, line, station);
+
+      // HTMLを生成
+      let html = `<div style="color: #e0e4eb; line-height: 1.8;">`;
+      html += `<div style="font-size: 1.5rem; font-weight: bold; color: #5fb3d3; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.1em;">${station}</div>`;
+      
+      // 家賃相場を表示（駅名の下）
+      if (details.rent !== null) {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">家賃相場:</strong> <span style="color: #e0e4eb;">${details.rent}万円</span></div>`;
+      } else {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">家賃相場:</strong> <span style="color: #888;">データなし</span></div>`;
+      }
+      
+      if (details.time !== null) {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">神谷町からの時間:</strong> <span style="color: #e0e4eb;">${details.time}分</span></div>`;
+      } else {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">神谷町からの時間:</strong> <span style="color: #888;">データなし</span></div>`;
+      }
+
+      if (details.transfers !== null) {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">乗換回数:</strong> <span style="color: #e0e4eb;">${details.transfers}回</span></div>`;
+      } else {
+        html += `<div style="margin-top: 12px;"><strong style="color: #5fb3d3;">乗換回数:</strong> <span style="color: #888;">データなし</span></div>`;
+      }
+
+      html += `</div>`;
+      emptyBox.innerHTML = html;
+    }
+
+    renderLineOptions(railwaySelect.value);
+    
+    // 鉄道選択変更時に沿線を更新し、自動的にチャートとチェックボックスを表示
+    railwaySelect.addEventListener('change', async () => {
+      renderLineOptions(railwaySelect.value);
+      // 沿線が更新された後、少し待ってからチャートとチェックボックスを表示
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await displayStationCheckboxes();
+      await displayChart();
+    });
+    
+    // 沿線選択変更時に自動的にチャートとチェックボックスを表示
+    lineSelect.addEventListener('change', async () => {
+      await displayStationCheckboxes();
+      await displayChart();
+    });
+
+    async function displayChart() {
+      // 選択された値を動的に取得（a = 鉄道, b = 沿線）
+      const a = railwaySelect.value;  // ダウンテーブルから選択された鉄道
+      const b = lineSelect.value;     // ダウンテーブルから選択された沿線
+
+      // 鉄道または沿線が選択されていない場合は何も表示しない
+      if (!a || !b || a === '' || b === '') {
+        // チャートコンテナを非表示
+        if (chartContainer) {
+          chartContainer.classList.remove('active');
+        }
+        // 既存のチャートを破棄
+        if (myChart) {
+          myChart.destroy();
+          myChart = null;
+        }
+        // 実質家賃チャートと表も非表示
+        const realRentChartContainer = document.getElementById('real-rent-chart-container');
+        const realRentTableContainer = document.getElementById('real-rent-table-container');
+        if (realRentChartContainer) {
+          realRentChartContainer.classList.remove('active');
+        }
+        if (realRentTableContainer) {
+          realRentTableContainer.classList.remove('active');
+        }
+        return;
+      }
+
+      console.log('選択された値:', { 鉄道: a, 沿線: b });
+
+      // fix_data.jsonを読み込む
+      const data = await loadFixData();
+      if (!data) {
+        console.error('データの読み込みに失敗しました。');
+        alert('データの読み込みに失敗しました。');
+        return;
+      }
+
+      // データを抽出（動的に選択された値を使用）
+      const extracted = extractData(data, a, b);
+      
+      // データがない場合は空のチャートを表示
+      if (extracted.stations.length === 0 || extracted.rents.length === 0) {
+        console.warn(`選択された鉄道「${a}」と沿線「${b}」のデータが見つかりませんでした。`, extracted);
+        
+        // 既存のチャートを破棄
+        if (myChart) {
+          myChart.destroy();
+          myChart = null;
+        }
+
+        // チャートコンテナを表示
+        chartContainer.classList.add('active');
+
+        // 空のチャートを作成
+        const ctx = document.getElementById('myChart');
+        myChart = initMainChart(ctx);
+        
+        // 乗換回数の凡例を非表示
+        const legend = document.getElementById('transfer-legend');
+        if (legend) {
+          legend.classList.remove('active');
+        }
+        
+        return;
+      }
+
+      console.log('抽出されたデータ:', {
+        駅数: extracted.stations.length,
+        家賃数: extracted.rents.length,
+        時間数: extracted.times ? extracted.times.filter(t => t !== null).length : 0,
+        最初の駅: extracted.stations[0],
+        最初の家賃: extracted.rents[0],
+        最初の時間: extracted.times ? extracted.times[0] : null
+      });
+
+      // 既存のチャートを破棄
+      if (myChart) {
+        myChart.destroy();
+        myChart = null;
+      }
+
+      // チャートコンテナを表示
+      chartContainer.classList.add('active');
+
+      // チャートを作成（chart_code.jsの関数を使用）
+      const ctx = document.getElementById('myChart');
+      myChart = createChart(ctx, extracted.stations, extracted.rents, extracted.times, extracted.transfers, '家賃相場（万円）');
+      
+      // 元のborderColorを保存
+      if (myChart && myChart.data.datasets && myChart.data.datasets.length > 0) {
+        const barDataset = myChart.data.datasets[0];
+        if (barDataset.borderColor && Array.isArray(barDataset.borderColor)) {
+          myChart.originalBorderColors = [...barDataset.borderColor];
+        }
+      }
+
+      // 乗換回数の凡例を表示
+      displayTransferLegend();
+      
+      // 分給換算チャートを表示
+      displaySalaryChart(extracted.stations, extracted.times, extracted.transfers);
+      
+      // 分給換算値の表を表示
+      const minuteSalary = getMinuteSalary();
+      displayCommuteSalaryTable(extracted.stations, extracted.times, extracted.transfers, minuteSalary);
+      
+      // 実質家賃チャートと表を表示（分給が設定されている場合のみ）
+      const minuteSalaryForTable = getMinuteSalary();
+      if (minuteSalaryForTable !== null && minuteSalaryForTable !== undefined) {
+        displayRealRentChart(extracted.stations, extracted.rents, extracted.times, extracted.transfers);
+        displayRealRentTable(extracted.stations, extracted.rents, extracted.times, extracted.transfers, minuteSalaryForTable);
+      } else {
+        // 分給が設定されていない場合は非表示
+        const realRentChartContainer = document.getElementById('real-rent-chart-container');
+        const realRentTableContainer = document.getElementById('real-rent-table-container');
+        if (realRentChartContainer) {
+          realRentChartContainer.classList.remove('active');
+        }
+        if (realRentTableContainer) {
+          realRentTableContainer.classList.remove('active');
+        }
+      }
+    }
+
+    // チャートの棒グラフの枠線をハイライト
+    function highlightChartBar(selectedIndex) {
+      if (!myChart || !myChart.data.datasets || myChart.data.datasets.length === 0) {
+        return;
+      }
+
+      const barDataset = myChart.data.datasets[0]; // 家賃相場の棒グラフ
+      if (!barDataset.borderColor || !Array.isArray(barDataset.borderColor)) {
+        return;
+      }
+
+      // 元のborderColorを保存（初回のみ）
+      if (!myChart.originalBorderColors) {
+        myChart.originalBorderColors = [...barDataset.borderColor];
+      }
+
+      // 全ての枠線を元の色に戻す
+      barDataset.borderColor = [...myChart.originalBorderColors];
+      
+      // borderWidthを配列に変換（まだ配列でない場合）
+      if (!Array.isArray(barDataset.borderWidth)) {
+        const width = barDataset.borderWidth || 1;
+        barDataset.borderWidth = barDataset.borderColor.map(() => width);
+      } else {
+        barDataset.borderWidth = barDataset.borderColor.map(() => 1);
+      }
+
+      // 選択された駅の枠線をハイライト
+      if (selectedIndex >= 0 && selectedIndex < barDataset.borderColor.length) {
+        barDataset.borderColor[selectedIndex] = '#ff0000'; // 赤でハイライト
+        barDataset.borderWidth[selectedIndex] = 3; // 太くする
+      }
+
+      myChart.update();
+    }
+
+    // チャートのハイライトを解除
+    function resetChartHighlight() {
+      if (!myChart || !myChart.data.datasets || myChart.data.datasets.length === 0) {
+        return;
+      }
+
+      const barDataset = myChart.data.datasets[0];
+      if (!myChart.originalBorderColors) {
+        return;
+      }
+
+      // 全ての枠線を元の色に戻す
+      barDataset.borderColor = [...myChart.originalBorderColors];
+      
+      // borderWidthを配列に変換（まだ配列でない場合）
+      if (!Array.isArray(barDataset.borderWidth)) {
+        const width = barDataset.borderWidth || 1;
+        barDataset.borderWidth = barDataset.borderColor.map(() => width);
+      } else {
+        barDataset.borderWidth = barDataset.borderColor.map(() => 1);
+      }
+
+      myChart.update();
+    }
+
+    // 乗換回数の表を表示
+    function displayTransfersTable(stations, transfers) {
+      const transfersTableContainer = document.getElementById('transfers-table-container');
+      
+      if (!stations || stations.length === 0) {
+        transfersTableContainer.classList.remove('active');
+        return;
+      }
+
+      // 表のHTMLを生成
+      let html = '<table class="transfers-table">';
+      html += '<tbody>';
+      // 1行目: 左上に「乗換回数(回)」、その右に駅名
+      html += '<tr>';
+      html += '<td style="font-weight: 600; color: #5fb3d3;">乗換回数(回)</td>';
+      stations.forEach(station => {
+        html += `<td style="font-weight: 600; color: #5fb3d3;">${station}</td>`;
+      });
+      html += '</tr>';
+      // 2行目: 左上は空、その右に乗換回数の数値
+      html += '<tr>';
+      html += '<td></td>';
+      stations.forEach((station, index) => {
+        const transfer = transfers && transfers[index] !== null && transfers[index] !== undefined 
+          ? transfers[index] 
+          : '-';
+        html += `<td>${transfer}</td>`;
+      });
+      html += '</tr>';
+      html += '</tbody>';
+      html += '</table>';
+
+      transfersTableContainer.innerHTML = html;
+      transfersTableContainer.classList.add('active');
+    }
+
+    // 乗換回数の凡例を表示
+    function displayTransferLegend() {
+      const legend = document.getElementById('transfer-legend');
+      
+      // 色と乗換回数のマッピング（3回まで、高コントラスト）
+      const legendItems = [
+        { transfer: 0, color: 'rgba(0, 123, 255, 0.8)', borderColor: 'rgba(0, 123, 255, 1)' },
+        { transfer: 1, color: 'rgba(40, 167, 69, 0.8)', borderColor: 'rgba(40, 167, 69, 1)' },
+        { transfer: 2, color: 'rgba(255, 193, 7, 0.8)', borderColor: 'rgba(255, 193, 7, 1)' },
+        { transfer: '3+', color: 'rgba(220, 53, 69, 0.8)', borderColor: 'rgba(220, 53, 69, 1)' }
+      ];
+
+      let html = '<div class="transfer-legend-title">乗換回数</div>';
+      html += '<div class="transfer-legend-items">';
+      legendItems.forEach(item => {
+        html += `
+          <div class="transfer-legend-item">
+            <div class="transfer-legend-color" style="background-color: ${item.color}; border-color: ${item.borderColor};"></div>
+            <span>${item.transfer}回</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      legend.innerHTML = html;
+      legend.classList.add('active');
+    }
+
+    // 月収入力ボックスのバリデーション
+    const monthlyIncomeInput = document.getElementById('monthly-income');
+    const monthlyIncomeError = document.getElementById('monthly-income-error');
+    
+    if (monthlyIncomeInput && monthlyIncomeError) {
+      // 入力時にリアルタイムでバリデーション
+      monthlyIncomeInput.addEventListener('input', function() {
+        validateMonthlyIncome(monthlyIncomeInput, monthlyIncomeError);
+      });
+      
+      // フォーカスが外れた時にもバリデーション
+      monthlyIncomeInput.addEventListener('blur', function() {
+        validateMonthlyIncome(monthlyIncomeInput, monthlyIncomeError);
+      });
+    }
+
+    // 設定ボタンのイベントリスナー
+    const settingButton = document.getElementById('setting-button');
+    if (settingButton && monthlyIncomeInput) {
+      settingButton.addEventListener('click', async function() {
+        // バリデーションを実行
+        if (!validateMonthlyIncome(monthlyIncomeInput, monthlyIncomeError)) {
+          return; // バリデーションエラーの場合は送信しない
+        }
+
+        const monthlyIncome = monthlyIncomeInput.value.trim();
+        if (!monthlyIncome) {
+          monthlyIncomeError.textContent = '月収を入力してください';
+          monthlyIncomeError.classList.add('active');
+          return;
+        }
+
+        try {
+          const response = await fetch('http://127.0.0.1:5000/set-salary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ monthly_income: monthlyIncome }),
+          });
+
+          const data = await response.json();
+          
+          if (!response.ok) {
+            console.error('エラー:', data.error);
+            alert(data.error || '月収の設定に失敗しました。');
+            return;
+          }
+
+          console.log('月収が設定されました:', data);
+          
+          // 分給を表示
+          const minuteSalaryDisplay = document.getElementById('minute-salary-display');
+          if (minuteSalaryDisplay && data.average_minute_salary !== undefined) {
+            const averageMinuteSalary = parseFloat(data.average_minute_salary);
+            minuteSalaryDisplay.textContent = `あなたの分給：${averageMinuteSalary.toFixed(2)}円`;
+            minuteSalaryDisplay.classList.add('active');
+            
+            // 分給を保存（change_commute_salary.jsの関数を使用）
+            setMinuteSalary(averageMinuteSalary);
+            
+            // 分給換算チャートと実質家賃チャートを更新
+            const railway = railwaySelect.value;
+            const line = lineSelect.value;
+            if (railway && line) {
+              const fixData = await loadFixData();
+              if (fixData) {
+                const extracted = extractData(fixData, railway, line);
+                if (extracted.stations.length > 0) {
+                  await displaySalaryChart(extracted.stations, extracted.times, extracted.transfers);
+                  displayCommuteSalaryTable(extracted.stations, extracted.times, extracted.transfers, averageMinuteSalary);
+                  await displayRealRentChart(extracted.stations, extracted.rents, extracted.times, extracted.transfers);
+                  displayRealRentTable(extracted.stations, extracted.rents, extracted.times, extracted.transfers, averageMinuteSalary);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('リクエストエラー:', error);
+          alert('サーバーへの接続に失敗しました。');
+        }
+      });
+    }
+
+    // 初期読み込み時にチャートとチェックボックスを表示
+    (async () => {
+      // DOMが完全に読み込まれるまで待つ
+      if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+          document.addEventListener('DOMContentLoaded', resolve);
+        });
+      }
+      // 少し待ってからチャートとチェックボックスを表示（データ読み込みのため）
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // メインチャートを初期状態で表示
+      const ctx = document.getElementById('myChart');
+      if (ctx && chartContainer) {
+        chartContainer.classList.add('active');
+        myChart = initMainChart(ctx);
+      }
+      
+      // 初期状態では通勤時間の分給換算の表は表示しない
+      // 初期状態では実質家賃チャートと表は表示しない
+      // await displayStationCheckboxes();
+      // await displayChart();
+      
+      // 家賃入力と時間入力のバリデーション設定
+      const rentInput = document.getElementById('rent-input');
+      const timeInput = document.getElementById('time-input');
+      const rentInputError = document.getElementById('rent-input-error');
+      const timeInputError = document.getElementById('time-input-error');
+      
+      // 入力完了をチェックする関数
+      async function checkInputCompletion() {
+        console.log('checkInputCompletion関数が呼び出されました');
+        const rentValue = rentInput ? rentInput.value.trim() : '';
+        const timeValue = timeInput ? timeInput.value.trim() : '';
+        
+        // 選択された駅の神谷町までの時間を取得
+        let timeToKamiyacho = null;
+        const railway = railwaySelect ? railwaySelect.value : '';
+        const line = lineSelect ? lineSelect.value : '';
+        const stationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]:checked');
+        
+        if (stationCheckboxes.length > 0 && railway && line) {
+          const selectedStation = stationCheckboxes[0].value;
+          try {
+            const data = await loadFixData();
+            if (data) {
+              const details = getStationDetails(data, railway, line, selectedStation);
+              timeToKamiyacho = details.time;
+              console.log('選択された駅:', selectedStation, '神谷町までの時間:', timeToKamiyacho);
+            }
+          } catch (error) {
+            console.error('駅情報の取得に失敗しました:', error);
+          }
+        }
+        
+        console.log('入力値:', { rentValue, timeValue, timeToKamiyacho });
+        
+        // バリデーションチェック
+        let hasError = false;
+        
+        if (!rentValue) {
+          if (rentInputError) {
+            rentInputError.textContent = '家賃を入力してください';
+            rentInputError.classList.add('active');
+          }
+          hasError = true;
+        } else if (!validateHalfWidthNumber(rentValue)) {
+          if (rentInputError) {
+            rentInputError.textContent = '半角の数字を入れてください';
+            rentInputError.classList.add('active');
+          }
+          hasError = true;
+        } else {
+          if (rentInputError) {
+            rentInputError.textContent = '';
+            rentInputError.classList.remove('active');
+          }
+        }
+        
+        if (!timeValue) {
+          if (timeInputError) {
+            timeInputError.textContent = '対象駅までの時間を入力してください';
+            timeInputError.classList.add('active');
+          }
+          hasError = true;
+        } else if (!validateHalfWidthNumber(timeValue)) {
+          if (timeInputError) {
+            timeInputError.textContent = '半角の数字を入れてください';
+            timeInputError.classList.add('active');
+          }
+          hasError = true;
+        } else {
+          if (timeInputError) {
+            timeInputError.textContent = '';
+            timeInputError.classList.remove('active');
+          }
+        }
+        
+        if (hasError) {
+          console.log('バリデーションエラーがあるため、リクエストを送信しません');
+          return;
+        }
+        
+        console.log('サーバーにリクエストを送信します');
+        // 分給を取得（change_commute_salary.jsから）
+        const minuteSalary = typeof getMinuteSalary === 'function' ? getMinuteSalary() : null;
+        console.log('取得した分給:', minuteSalary);
+        
+        // 両方の入力がある場合のみサーバーにリクエスト
+        try {
+          const requestData = {
+            rent_input: parseFloat(rentValue),
+            time_to_station: parseFloat(timeValue),
+            time_to_kamiyacho: timeToKamiyacho !== null ? parseFloat(timeToKamiyacho) : null,
+            minute_salary: minuteSalary !== null ? parseFloat(minuteSalary) : null
+          };
+          console.log('送信データ:', requestData);
+          
+          const response = await fetch('/check-input-completion', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              rent_input: parseFloat(rentValue),
+              time_to_station: parseFloat(timeValue),
+              time_to_kamiyacho: timeToKamiyacho !== null ? parseFloat(timeToKamiyacho) : null,
+              minute_salary: minuteSalary !== null ? parseFloat(minuteSalary) : null
+            }),
+          });
+          
+          const result = await response.json();
+          console.log('入力完了チェックのレスポンス:', result);
+          
+          if (!response.ok) {
+            console.error('エラー:', result.error);
+            alert(result.error || '入力の確認に失敗しました。');
+            // エラー時は実質家賃の表示を非表示にする
+            const realRentResult = document.getElementById('real-rent-result');
+            if (realRentResult) {
+              realRentResult.style.display = 'none';
+            }
+            return;
+          }
+          
+          // 実質家賃の値を表示
+          const realRentResult = document.getElementById('real-rent-result');
+          if (realRentResult && result.real_rent_fee !== undefined) {
+            const realRentValue = Math.round(result.real_rent_fee);
+            realRentResult.textContent = `${realRentValue.toLocaleString()}円`;
+            realRentResult.style.display = 'block';
+          }
+          
+          if (result.message) {
+            console.log(result.message);
+          }
+        } catch (error) {
+          console.error('リクエストエラー:', error);
+          console.error('エラーの詳細:', error.message);
+          console.error('エラーのスタック:', error.stack);
+          alert('サーバーへの接続に失敗しました。サーバーが起動しているか確認してください。\nエラー: ' + error.message);
+        }
+      }
+      
+      if (rentInput && rentInputError) {
+        rentInput.addEventListener('input', () => {
+          validateRentInput(rentInput, rentInputError);
+        });
+        rentInput.addEventListener('blur', () => {
+          validateRentInput(rentInput, rentInputError);
+        });
+      }
+      
+      if (timeInput && timeInputError) {
+        timeInput.addEventListener('input', () => {
+          validateTimeInput(timeInput, timeInputError);
+        });
+        timeInput.addEventListener('blur', () => {
+          validateTimeInput(timeInput, timeInputError);
+        });
+      }
+      
+      // 検索ボタンのイベントリスナー
+      function setupSearchButton() {
+        const searchButton = document.getElementById('search-button');
+        console.log('検索ボタンの取得:', searchButton);
+        
+        if (searchButton) {
+          console.log('検索ボタンのイベントリスナーを設定します');
+          searchButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('検索ボタンがクリックされました');
+            await checkInputCompletion();
+          });
+          console.log('検索ボタンのイベントリスナー設定完了');
+        } else {
+          console.error('検索ボタンが見つかりません');
+          // 少し待ってから再試行
+          setTimeout(setupSearchButton, 100);
+        }
+      }
+      
+      // 検索ボタンを設定
+      setupSearchButton();
+    })();
+  </script>
+</body>
+</html>
