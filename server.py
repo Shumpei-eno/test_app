@@ -11,7 +11,7 @@ import nbformat
 from salary_calc import process_monthly_income, check_input_completion
 
 BASE_DIR = Path(__file__).parent
-NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"
+NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"  # 存在しない場合はエラーになるが、/run-notebookエンドポイントが呼ばれた時のみ
 
 app = Flask(__name__)
 
@@ -38,6 +38,8 @@ def _inject_parameter(nb: nbformat.NotebookNode, selected_line: str) -> None:
 
 def execute_notebook(selected_line: str) -> str:
     """ノートブックを実行し、テキスト出力をまとめて返す。"""
+    if not NOTEBOOK_PATH.exists():
+        raise FileNotFoundError(f"ノートブックファイルが見つかりません: {NOTEBOOK_PATH}")
     nb = nbformat.read(str(NOTEBOOK_PATH), as_version=4)
     _inject_parameter(nb, selected_line)
 
