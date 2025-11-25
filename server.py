@@ -9,11 +9,19 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 import nbformat
 from salary_calc import process_monthly_income, check_input_completion
+from database import init_database, create_user, verify_user
 
 BASE_DIR = Path(__file__).parent
 NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"  # 存在しない場合はエラーになるが、/run-notebookエンドポイントが呼ばれた時のみ
 
 app = Flask(__name__)
+
+# アプリケーション起動時にデータベースを初期化
+try:
+    init_database()
+    print("データベースの初期化が完了しました")
+except Exception as e:
+    print(f"データベースの初期化中にエラーが発生しました: {e}")
 
 
 def _inject_parameter(nb: nbformat.NotebookNode, selected_line: str) -> None:
@@ -193,6 +201,79 @@ def check_input_completion_endpoint():
         print("エラーが発生しました:", str(exc))
         print("=" * 50)
         app.logger.exception("サーバー内部エラーが発生しました")  # noqa: G004
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/register", methods=["POST", "OPTIONS"])
+def register_endpoint():
+    """ユーザー登録エンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    payload = request.get_json(silent=True) or {}
+    username = payload.get("username", "").strip()
+    password = payload.get("password", "").strip()
+    
+    print(f"登録リクエスト受信: username={username}, password_length={len(password)}")
+    
+    # バリデーション
+    if not username:
+        error_msg = "ユーザーネームを入力してください"
+        print(f"エラー: {error_msg}")
+        return jsonify({"error": error_msg}), 400
+    
+    if len(username) < 3:
+        error_msg = "ユーザーネームは3文字以上で入力してください"
+        print(f"エラー: {error_msg}")
+        return jsonify({"error": error_msg}), 400
+    
+    if not password:
+        error_msg = "パスワードを入力してください"
+        print(f"エラー: {error_msg}")
+        return jsonify({"error": error_msg}), 400
+    
+    if len(password) < 6:
+        error_msg = "パスワードは6文字以上で入力してください"
+        print(f"エラー: {error_msg}")
+        return jsonify({"error": error_msg}), 400
+    
+    try:
+        result = create_user(username, password)
+        if "error" in result:
+            print(f"ユーザー作成エラー: {result['error']}")
+            return jsonify(result), 400
+        print(f"ユーザー登録成功: username={username}, id={result.get('id')}")
+        return jsonify({"message": "ユーザー登録が完了しました", "user": result}), 201
+    except Exception as exc:
+        app.logger.exception("ユーザー登録中にエラーが発生しました")
+        print(f"例外発生: {str(exc)}")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/login", methods=["POST", "OPTIONS"])
+def login_endpoint():
+    """ログインエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    payload = request.get_json(silent=True) or {}
+    username = payload.get("username", "").strip()
+    password = payload.get("password", "").strip()
+    
+    # バリデーション
+    if not username:
+        return jsonify({"error": "ユーザーネームを入力してください"}), 400
+    
+    if not password:
+        return jsonify({"error": "パスワードを入力してください"}), 400
+    
+    try:
+        result = verify_user(username, password)
+        if "error" in result:
+            return jsonify(result), 401
+        return jsonify({"message": "ログインに成功しました", "user": result}), 200
+    except Exception as exc:
+        app.logger.exception("ログイン中にエラーが発生しました")
         return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
 
 

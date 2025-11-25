@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新規登録 - 神谷町駅からの最適住宅地検索</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+    :root {
+      color-scheme: dark;
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Hiragino Kaku Gothic Pro", "Yu Gothic", "Meiryo", "メイリオ", sans-serif;
+      background-color: #1a1d2e;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      color: #e0e4eb;
+      background-color: transparent;
+      overflow-x: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 背景レイヤー */
+    .background-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .login-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('bg_pictures/pic_1.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 1;
+      z-index: 0;
+      /* 下部をフェードアウトさせるためのマスク */
+      mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+      mask-size: 100% 100%;
+      -webkit-mask-size: 100% 100%;
+      mask-position: center;
+      -webkit-mask-position: center;
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+    }
+    .login-background::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(26, 29, 46, 0.3) 0%, rgba(42, 45, 62, 0.5) 100%);
+      z-index: 1;
+    }
+    .background-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(26, 29, 46, 0.3) 0%, rgba(26, 29, 46, 0.7) 100%);
+      z-index: 2;
+    }
+    /* タイトル */
+    .login-page-title {
+      position: relative;
+      z-index: 10;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      color: #1e40af;
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      animation: fadeInUp 1s ease-out;
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* ログインフォーム */
+    .login-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 400px;
+      padding: 40px;
+      background: rgba(42, 45, 62, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(95, 179, 211, 0.2);
+      animation: fadeInUp 1s ease-out 0.2s both;
+    }
+    .login-title {
+      font-size: 2rem;
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 32px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-label {
+      font-size: 1rem;
+      color: #e0e4eb;
+      font-weight: 500;
+    }
+    .form-input {
+      background: #1a1d2e;
+      border: 1px solid #3a3d4e;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #e0e4eb;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #5fb3d3;
+      box-shadow: 0 0 0 2px rgba(95, 179, 211, 0.2);
+    }
+    .form-input::placeholder {
+      color: #888;
+    }
+    .login-button {
+      background: #5fb3d3;
+      border: 1px solid #5fb3d3;
+      color: #1a1d2e;
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .login-button:hover {
+      background: #7fc3e3;
+      border-color: #7fc3e3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(95, 179, 211, 0.3);
+    }
+    .login-button:active {
+      background: #4fa3c3;
+      transform: translateY(0);
+    }
+    .login-button:disabled {
+      background: #888;
+      border-color: #888;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .error-message {
+      color: #ff6b6b;
+      font-size: 0.9rem;
+      margin-top: 4px;
+      display: none;
+    }
+    .error-message.active {
+      display: block;
+    }
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    .register-link a {
+      color: #5fb3d3;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .register-link a:hover {
+      color: #7fc3e3;
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景レイヤー -->
+  <div class="background-layer">
+    <div class="login-background"></div>
+    <div class="background-overlay"></div>
+  </div>
+
+  <!-- タイトル -->
+  <h1 class="login-page-title">最適住居検索</h1>
+
+  <!-- 新規登録フォーム -->
+  <div class="login-container">
+    <h1 class="login-title">新規登録</h1>
+    <form class="login-form" id="register-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="username">ユーザーネーム</label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username"
+          class="form-input" 
+          placeholder="ユーザーネームを入力（3文字以上）"
+          autocomplete="username"
+          required
+        >
+        <div class="error-message" id="username-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">パスワード</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password"
+          class="form-input" 
+          placeholder="6文字以上で入力"
+          autocomplete="new-password"
+          required
+        >
+        <div class="error-message" id="password-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password-confirm">パスワード（確認）</label>
+        <input 
+          type="password" 
+          id="password-confirm" 
+          name="password-confirm"
+          class="form-input" 
+          placeholder="パスワードを再入力"
+          autocomplete="new-password"
+          required
+        >
+        <div class="error-message" id="password-confirm-error"></div>
+      </div>
+      <button type="submit" class="login-button">登録</button>
+    </form>
+    <div class="register-link">
+      既にアカウントをお持ちの方は<a href="login.html">ログイン</a>
+    </div>
+  </div>
+
+  <script>
+    // 新規登録フォームの処理
+    const registerForm = document.getElementById('register-form');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const passwordConfirmInput = document.getElementById('password-confirm');
+    const usernameError = document.getElementById('username-error');
+    const passwordError = document.getElementById('password-error');
+    const passwordConfirmError = document.getElementById('password-confirm-error');
+
+    registerForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // エラーメッセージをリセット
+      usernameError.classList.remove('active');
+      passwordError.classList.remove('active');
+      passwordConfirmError.classList.remove('active');
+      usernameError.textContent = '';
+      passwordError.textContent = '';
+      passwordConfirmError.textContent = '';
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      const passwordConfirm = passwordConfirmInput.value.trim();
+
+      // バリデーション
+      let hasError = false;
+
+      if (!username) {
+        usernameError.textContent = 'ユーザーネームを入力してください';
+        usernameError.classList.add('active');
+        hasError = true;
+      } else if (username.length < 3) {
+        usernameError.textContent = 'ユーザーネームは3文字以上で入力してください';
+        usernameError.classList.add('active');
+        hasError = true;
+      }
+
+      if (!password) {
+        passwordError.textContent = 'パスワードを入力してください';
+        passwordError.classList.add('active');
+        hasError = true;
+      } else if (password.length < 6) {
+        passwordError.textContent = 'パスワードは6文字以上で入力してください';
+        passwordError.classList.add('active');
+        hasError = true;
+      }
+
+      if (!passwordConfirm) {
+        passwordConfirmError.textContent = 'パスワード（確認）を入力してください';
+        passwordConfirmError.classList.add('active');
+        hasError = true;
+      } else if (password !== passwordConfirm) {
+        passwordConfirmError.textContent = 'パスワードが一致しません';
+        passwordConfirmError.classList.add('active');
+        hasError = true;
+      }
+
+      if (hasError) {
+        return;
+      }
+
+      // 新規登録処理（サーバーにリクエストを送信）
+      const registerButton = registerForm.querySelector('.login-button');
+      const originalText = registerButton.textContent;
+      registerButton.textContent = '登録中...';
+      registerButton.disabled = true;
+
+      fetch('/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          // エラーメッセージを表示
+          if (data.error.includes('ユーザーネーム') || data.error.includes('既に登録')) {
+            usernameError.textContent = data.error;
+            usernameError.classList.add('active');
+          } else if (data.error.includes('パスワード')) {
+            passwordError.textContent = data.error;
+            passwordError.classList.add('active');
+          } else {
+            usernameError.textContent = data.error;
+            usernameError.classList.add('active');
+          }
+          registerButton.textContent = originalText;
+          registerButton.disabled = false;
+        } else {
+          // 登録成功
+          alert('登録が完了しました。ログインページに移動します。');
+          window.location.href = 'login.html';
+        }
+      })
+      .catch(error => {
+        console.error('登録エラー:', error);
+        usernameError.textContent = 'サーバーへの接続に失敗しました';
+        usernameError.classList.add('active');
+        registerButton.textContent = originalText;
+        registerButton.disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
+
