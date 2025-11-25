@@ -9,7 +9,7 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 import nbformat
 from salary_calc import process_monthly_income, check_input_completion
-from database import init_database, create_user, verify_user, get_all_users, get_user_by_username
+from database import init_database, create_user, verify_user, get_all_users, get_user_by_username, create_property, get_properties_by_user_id, delete_property
 
 BASE_DIR = Path(__file__).parent
 NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"  # 存在しない場合はエラーになるが、/run-notebookエンドポイントが呼ばれた時のみ
@@ -308,6 +308,76 @@ def get_user_endpoint(username):
         return jsonify({"user": user}), 200
     except Exception as exc:
         app.logger.exception("ユーザー取得中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/properties", methods=["POST", "OPTIONS"])
+def create_property_endpoint():
+    """物件情報を登録するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    payload = request.get_json(silent=True) or {}
+    user_id = payload.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "ユーザーIDが必要です"}), 400
+    
+    try:
+        result = create_property(
+            user_id=user_id,
+            mansion_name=payload.get("mansion_name"),
+            address=payload.get("address"),
+            layout=payload.get("layout"),
+            area=payload.get("area"),
+            rent=payload.get("rent"),
+            time_to_station=payload.get("time_to_station"),
+            real_rent=payload.get("real_rent")
+        )
+        
+        if "error" in result:
+            return jsonify(result), 400
+        return jsonify({"message": "物件を登録しました", "property": result}), 201
+    except Exception as exc:
+        app.logger.exception("物件登録中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/properties/<int:user_id>", methods=["GET", "OPTIONS"])
+def get_properties_endpoint(user_id):
+    """特定のユーザーの物件一覧を取得するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        properties = get_properties_by_user_id(user_id)
+        if properties and len(properties) == 1 and "error" in properties[0]:
+            return jsonify(properties[0]), 500
+        return jsonify({"properties": properties, "count": len(properties)}), 200
+    except Exception as exc:
+        app.logger.exception("物件一覧取得中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/properties/<int:property_id>", methods=["DELETE", "OPTIONS"])
+def delete_property_endpoint(property_id):
+    """物件を削除するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    payload = request.get_json(silent=True) or {}
+    user_id = payload.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "ユーザーIDが必要です"}), 400
+    
+    try:
+        result = delete_property(property_id, user_id)
+        if "error" in result:
+            return jsonify(result), 400
+        return jsonify(result), 200
+    except Exception as exc:
+        app.logger.exception("物件削除中にエラーが発生しました")
         return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
 
 

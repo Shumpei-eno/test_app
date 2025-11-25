@@ -43,7 +43,7 @@ def get_db_cursor():
 
 
 def init_database():
-    """データベースの初期化（ユーザーテーブルの作成）"""
+    """データベースの初期化（ユーザーテーブルと物件テーブルの作成）"""
     with get_db_cursor() as cursor:
         # ユーザーテーブルの作成
         cursor.execute("""
@@ -59,6 +59,31 @@ def init_database():
         # インデックスの作成
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
+        """)
+        
+        # 物件テーブルの作成（ユーザーIDを外部キーとして持つ）
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS properties (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                mansion_name VARCHAR(255),
+                address VARCHAR(500),
+                layout VARCHAR(50),
+                area DECIMAL(10, 2),
+                rent INTEGER,
+                time_to_station INTEGER,
+                real_rent DECIMAL(10, 2),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # 物件テーブルのインデックス作成
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_properties_user_id ON properties(user_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_properties_created_at ON properties(created_at DESC)
         """)
 
 
@@ -155,4 +180,83 @@ def get_all_users() -> list:
             return result
     except Exception as e:
         return [{"error": f"ユーザー一覧の取得に失敗しました: {str(e)}"}]
+
+
+def create_property(user_id: int, mansion_name: str = None, address: str = None, 
+                    layout: str = None, area: float = None, rent: int = None,
+                    time_to_station: int = None, real_rent: float = None) -> dict:
+    """物件情報を作成（ユーザーIDに紐づける）"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO properties (user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent, created_at
+            """, (user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent))
+            result = cursor.fetchone()
+            return {
+                "id": result["id"],
+                "user_id": result["user_id"],
+                "mansion_name": result["mansion_name"],
+                "address": result["address"],
+                "layout": result["layout"],
+                "area": float(result["area"]) if result["area"] else None,
+                "rent": result["rent"],
+                "time_to_station": result["time_to_station"],
+                "real_rent": float(result["real_rent"]) if result["real_rent"] else None,
+                "created_at": result["created_at"].isoformat() if result["created_at"] else None
+            }
+    except Exception as e:
+        return {"error": f"物件登録に失敗しました: {str(e)}"}
+
+
+def get_properties_by_user_id(user_id: int) -> list:
+    """特定のユーザーの物件一覧を取得"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                SELECT id, user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent, created_at, updated_at
+                FROM properties
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+            """, (user_id,))
+            properties = cursor.fetchall()
+            
+            result = []
+            for prop in properties:
+                result.append({
+                    "id": prop["id"],
+                    "user_id": prop["user_id"],
+                    "mansion_name": prop["mansion_name"],
+                    "address": prop["address"],
+                    "layout": prop["layout"],
+                    "area": float(prop["area"]) if prop["area"] else None,
+                    "rent": prop["rent"],
+                    "time_to_station": prop["time_to_station"],
+                    "real_rent": float(prop["real_rent"]) if prop["real_rent"] else None,
+                    "created_at": prop["created_at"].isoformat() if prop["created_at"] else None,
+                    "updated_at": prop["updated_at"].isoformat() if prop["updated_at"] else None
+                })
+            return result
+    except Exception as e:
+        return [{"error": f"物件一覧の取得に失敗しました: {str(e)}"}]
+
+
+def delete_property(property_id: int, user_id: int) -> dict:
+    """物件を削除（所有者のみ削除可能）"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                DELETE FROM properties
+                WHERE id = %s AND user_id = %s
+                RETURNING id
+            """, (property_id, user_id))
+            result = cursor.fetchone()
+            
+            if result:
+                return {"message": "物件を削除しました", "id": result["id"]}
+            else:
+                return {"error": "物件が見つからないか、削除権限がありません"}
+    except Exception as e:
+        return {"error": f"物件削除に失敗しました: {str(e)}"}
 
