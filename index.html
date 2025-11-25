@@ -306,7 +306,8 @@
       position: relative;
     }
     .suumo-iframe-container {
-      width: 100%;
+      width: 80%;
+      margin-right: auto;
       border: 1px solid #3a3d4e;
       border-radius: 8px;
       overflow: hidden;
@@ -321,8 +322,8 @@
     }
     .iframe-fixed-box {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 0;
+      left: calc(80% + 20px);
       width: 248px;
       min-height: 40px;
       padding: 16px;
@@ -972,6 +973,7 @@
           <div class="chart-container" id="chart-container">
             <div class="transfer-legend" id="transfer-legend"></div>
             <canvas id="myChart"></canvas>
+            <div style="font-size: 0.75rem; color: #888; margin-top: 8px; text-align: center;">＊乗換回数につき通勤時間＋7分と仮定</div>
           </div>
           <div style="display: flex; gap: 20px; width: 100%;">
             <div class="chart-container" id="salary-chart-container" style="flex: 0 0 55%;">
@@ -1004,6 +1006,23 @@
               <button type="button" class="search-button" id="search-button">検索</button>
               <div class="fixed-box-title">実質家賃の算出</div>
               <div class="fixed-box-result-value" id="real-rent-result">-</div>
+              <div style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 12px; margin-bottom: 12px;">↓検討する場合は登録</div>
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">マンション名</label>
+                <input type="text" class="fixed-box-input" id="mansion-name-input" placeholder="例: サンプルマンション">
+              </div>
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">住所</label>
+                <input type="text" class="fixed-box-input" id="address-input" placeholder="例: 東京都渋谷区...">
+              </div>
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">間取り</label>
+                <input type="text" class="fixed-box-input" id="layout-input" placeholder="例: 2LDK">
+              </div>
+              <div class="fixed-box-input-group">
+                <label class="fixed-box-label">専有面積</label>
+                <input type="text" class="fixed-box-input" id="area-input" placeholder="例: 60.5">
+              </div>
             </div>
             <div class="suumo-iframe-container">
               <iframe src="https://suumo.jp/chintai/soba/tokyo/ensen/" width="100%" height="800" frameborder="0" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
