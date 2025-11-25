@@ -311,6 +311,84 @@
       border-radius: 8px;
       border: 1px solid rgba(95, 179, 211, 0.3);
     }
+    .property-list-container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .property-item {
+      background: rgba(42, 45, 62, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(95, 179, 211, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .property-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      border-color: rgba(95, 179, 211, 0.4);
+    }
+    .property-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .property-item-name {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #5fb3d3;
+      margin-bottom: 8px;
+    }
+    .property-item-delete {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: #ff6b6b;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+    .property-item-delete:hover {
+      background: rgba(255, 107, 107, 0.2);
+      border-color: rgba(255, 107, 107, 0.5);
+    }
+    .property-item-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .property-item-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .property-item-detail-label {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    .property-item-detail-value {
+      font-size: 1rem;
+      color: #e0e4eb;
+      font-weight: 500;
+    }
+    .property-item-empty {
+      text-align: center;
+      color: #888;
+      padding: 40px;
+      font-size: 1.1rem;
+    }
+    .property-item-loading {
+      text-align: center;
+      color: #5fb3d3;
+      padding: 40px;
+      font-size: 1.1rem;
+    }
     .suumo-iframe-wrapper {
       width: 100%;
       margin-top: 20px;
@@ -1096,12 +1174,18 @@
                 <label class="fixed-box-label">専有面積</label>
                 <input type="text" class="fixed-box-input" id="area-input" placeholder="例: 60.5">
               </div>
+              <button type="button" class="search-button" id="register-property-button" style="margin-top: 12px;">物件を登録</button>
+              <div class="fixed-box-error" id="property-register-error" style="display: none; color: #ff6b6b; font-size: 0.9rem; margin-top: 8px;"></div>
+              <div class="fixed-box-success" id="property-register-success" style="display: none; color: #5fb3d3; font-size: 0.9rem; margin-top: 8px; text-align: center;">✓ 登録完了</div>
             </div>
             <div class="suumo-iframe-container">
               <iframe src="https://suumo.jp/chintai/soba/tokyo/ensen/" width="100%" height="800" frameborder="0" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
             </div>
           </div>
           <div class="property-list-title">検討物件一覧</div>
+          <div class="property-list-container" id="property-list-container">
+            <div class="property-item-loading">読み込み中...</div>
+          </div>
         </div>
       </div>
     </article>
@@ -1943,6 +2027,271 @@
       
       // 検索ボタンを設定
       setupSearchButton();
+      
+      // 物件登録ボタンのイベントリスナー
+      function setupRegisterPropertyButton() {
+        const registerButton = document.getElementById('register-property-button');
+        const errorDiv = document.getElementById('property-register-error');
+        const successDiv = document.getElementById('property-register-success');
+        
+        if (registerButton) {
+          registerButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // エラーメッセージと成功メッセージをリセット
+            if (errorDiv) {
+              errorDiv.style.display = 'none';
+              errorDiv.textContent = '';
+            }
+            if (successDiv) {
+              successDiv.style.display = 'none';
+            }
+            
+            // sessionStorageからuserIdを取得
+            const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+            if (!userId) {
+              if (errorDiv) {
+                errorDiv.textContent = 'ログイン情報が見つかりません。再度ログインしてください。';
+                errorDiv.style.display = 'block';
+              }
+              return;
+            }
+            
+            // 入力値を取得
+            const mansionName = document.getElementById('mansion-name-input')?.value.trim() || null;
+            const address = document.getElementById('address-input')?.value.trim() || null;
+            const layout = document.getElementById('layout-input')?.value.trim() || null;
+            const area = document.getElementById('area-input')?.value.trim() || null;
+            const rent = document.getElementById('rent-input')?.value.trim() || null;
+            const timeToStation = document.getElementById('time-input')?.value.trim() || null;
+            const realRentText = document.getElementById('real-rent-result')?.textContent.trim() || null;
+            
+            // 実質家賃を数値に変換（「-」や空文字の場合はnull）
+            let realRent = null;
+            if (realRentText && realRentText !== '-') {
+              // 「円」などの文字を除去して数値に変換
+              const realRentNum = parseFloat(realRentText.replace(/[^0-9.-]/g, ''));
+              if (!isNaN(realRentNum)) {
+                realRent = realRentNum;
+              }
+            }
+            
+            // マンション名は必須
+            if (!mansionName) {
+              if (errorDiv) {
+                errorDiv.textContent = 'マンション名を入力してください。';
+                errorDiv.style.display = 'block';
+              }
+              return;
+            }
+            
+            // 登録ボタンを無効化
+            registerButton.disabled = true;
+            registerButton.textContent = '登録中...';
+            
+            try {
+              const response = await fetch('/api/properties', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  user_id: parseInt(userId),
+                  mansion_name: mansionName,
+                  address: address,
+                  layout: layout,
+                  area: area ? parseFloat(area) : null,
+                  rent: rent ? parseInt(rent) : null,
+                  time_to_station: timeToStation ? parseInt(timeToStation) : null,
+                  real_rent: realRent
+                })
+              });
+              
+              const data = await response.json();
+              
+              if (response.ok && !data.error) {
+                // 登録成功
+                if (successDiv) {
+                  successDiv.style.display = 'block';
+                  successDiv.textContent = `✓ ${mansionName} を登録しました`;
+                }
+                
+                // 入力フィールドをクリア（オプション）
+                // document.getElementById('mansion-name-input').value = '';
+                // document.getElementById('address-input').value = '';
+                // document.getElementById('layout-input').value = '';
+                // document.getElementById('area-input').value = '';
+                
+                // 物件一覧を更新（後で実装）
+                // await loadPropertyList();
+              } else {
+                // エラー
+                if (errorDiv) {
+                  errorDiv.textContent = data.error || '登録に失敗しました';
+                  errorDiv.style.display = 'block';
+                }
+              }
+            } catch (error) {
+              console.error('物件登録エラー:', error);
+              if (errorDiv) {
+                errorDiv.textContent = 'サーバーへの接続に失敗しました';
+                errorDiv.style.display = 'block';
+              }
+            } finally {
+              // 登録ボタンを再有効化
+              registerButton.disabled = false;
+              registerButton.textContent = '物件を登録';
+            }
+          });
+        }
+      }
+      
+      // 物件登録ボタンを設定
+      setupRegisterPropertyButton();
+      
+      // 物件一覧を読み込む関数
+      async function loadPropertyList() {
+        const container = document.getElementById('property-list-container');
+        if (!container) return;
+        
+        // sessionStorageからuserIdを取得
+        const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+        if (!userId) {
+          container.innerHTML = '<div class="property-item-empty">ログイン情報が見つかりません</div>';
+          return;
+        }
+        
+        try {
+          container.innerHTML = '<div class="property-item-loading">読み込み中...</div>';
+          
+          const response = await fetch(`/api/properties/${userId}`);
+          const data = await response.json();
+          
+          if (response.ok && data.properties) {
+            if (data.properties.length === 0) {
+              container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
+            } else {
+              container.innerHTML = data.properties.map(property => {
+                if (property.error) {
+                  return `<div class="property-item-empty">エラー: ${property.error}</div>`;
+                }
+                
+                return `
+                  <div class="property-item" data-property-id="${property.id}">
+                    <div class="property-item-header">
+                      <div>
+                        <div class="property-item-name">${property.mansion_name || '（マンション名未入力）'}</div>
+                      </div>
+                      <button class="property-item-delete" onclick="deleteProperty(${property.id}, ${property.user_id})">削除</button>
+                    </div>
+                    <div class="property-item-details">
+                      ${property.address ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">住所</div>
+                          <div class="property-item-detail-value">${property.address}</div>
+                        </div>
+                      ` : ''}
+                      ${property.layout ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">間取り</div>
+                          <div class="property-item-detail-value">${property.layout}</div>
+                        </div>
+                      ` : ''}
+                      ${property.area ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">専有面積</div>
+                          <div class="property-item-detail-value">${property.area}㎡</div>
+                        </div>
+                      ` : ''}
+                      ${property.rent ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">家賃</div>
+                          <div class="property-item-detail-value">${property.rent.toLocaleString()}円</div>
+                        </div>
+                      ` : ''}
+                      ${property.time_to_station ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">駅までの時間</div>
+                          <div class="property-item-detail-value">${property.time_to_station}分</div>
+                        </div>
+                      ` : ''}
+                      ${property.real_rent ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">実質家賃</div>
+                          <div class="property-item-detail-value" style="color: #5fb3d3; font-weight: 600;">${Math.round(property.real_rent).toLocaleString()}円</div>
+                        </div>
+                      ` : ''}
+                      ${property.created_at ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">登録日</div>
+                          <div class="property-item-detail-value" style="font-size: 0.9rem;">${new Date(property.created_at).toLocaleDateString('ja-JP')}</div>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('');
+            }
+          } else {
+            container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
+          }
+        } catch (error) {
+          console.error('物件一覧取得エラー:', error);
+          container.innerHTML = '<div class="property-item-empty">サーバーへの接続に失敗しました</div>';
+        }
+      }
+      
+      // 物件を削除する関数
+      async function deleteProperty(propertyId, userId) {
+        if (!confirm('この物件を削除しますか？')) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/properties/${propertyId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              user_id: userId
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok && !data.error) {
+            // 削除成功、一覧を再読み込み
+            await loadPropertyList();
+          } else {
+            alert(data.error || '削除に失敗しました');
+          }
+        } catch (error) {
+          console.error('物件削除エラー:', error);
+          alert('サーバーへの接続に失敗しました');
+        }
+      }
+      
+      // ページ読み込み時に物件一覧を表示
+      loadPropertyList();
+      
+      // 登録成功時に一覧を再読み込み（登録成功メッセージ表示後に）
+      const originalSetupRegisterPropertyButton = setupRegisterPropertyButton;
+      setupRegisterPropertyButton = function() {
+        originalSetupRegisterPropertyButton();
+        const registerButton = document.getElementById('register-property-button');
+        if (registerButton) {
+          const originalClickHandler = registerButton.onclick;
+          registerButton.addEventListener('click', async function(e) {
+            await originalClickHandler(e);
+            // 登録成功後、少し待ってから一覧を更新
+            setTimeout(() => {
+              loadPropertyList();
+            }, 500);
+          });
+        }
+      };
     })();
   </script>
 </body>
