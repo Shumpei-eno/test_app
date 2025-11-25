@@ -647,6 +647,60 @@
       text-align: right;
       width: 50%;
     }
+    /* ユーザー名表示（右上固定） */
+    .user-info {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(42, 45, 62, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px 20px;
+      border: 1px solid rgba(95, 179, 211, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: #e0e4eb;
+      transition: all 0.3s ease;
+    }
+    .user-info:hover {
+      border-color: rgba(95, 179, 211, 0.5);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    }
+    .user-info-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5fb3d3 0%, #4fa3c3 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a1d2e;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    .user-info-username {
+      font-weight: 500;
+      color: #5fb3d3;
+    }
+    .user-info-logout {
+      margin-left: 10px;
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 6px;
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .user-info-logout:hover {
+      background: rgba(255, 107, 107, 0.1);
+      border-color: rgba(255, 107, 107, 0.5);
+    }
     .commute-salary-table tbody tr:last-child td {
       border-bottom: none;
     }
@@ -886,6 +940,13 @@
   <script src="real_rent_fee.js"></script>
 </head>
 <body>
+  <!-- ユーザー情報表示（右上固定） -->
+  <div class="user-info" id="user-info" style="display: none;">
+    <div class="user-info-icon" id="user-icon">U</div>
+    <span>ログイン中: <span class="user-info-username" id="username-display"></span></span>
+    <button class="user-info-logout" id="logout-button">ログアウト</button>
+  </div>
+
   <!-- 背景レイヤー -->
   <div class="background-layer">
     <div class="background-image-day" id="background-day"></div>
@@ -1043,6 +1104,42 @@
         // 未ログインの場合はlogin.htmlにリダイレクト
         window.location.href = 'login.html';
         return;
+      }
+      
+      // ログイン済みの場合、ユーザー名を表示
+      const username = sessionStorage.getItem('username') || localStorage.getItem('username');
+      if (username) {
+        const userInfo = document.getElementById('user-info');
+        const usernameDisplay = document.getElementById('username-display');
+        const userIcon = document.getElementById('user-icon');
+        
+        if (userInfo && usernameDisplay) {
+          usernameDisplay.textContent = username;
+          // ユーザー名の最初の文字をアイコンに表示
+          if (userIcon) {
+            userIcon.textContent = username.charAt(0).toUpperCase();
+          }
+          userInfo.style.display = 'flex';
+        }
+      }
+    })();
+    
+    // ログアウト機能
+    (function() {
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+        logoutButton.addEventListener('click', function() {
+          // セッションストレージとローカルストレージをクリア
+          sessionStorage.removeItem('isLoggedIn');
+          sessionStorage.removeItem('username');
+          sessionStorage.removeItem('userId');
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('username');
+          localStorage.removeItem('userId');
+          
+          // ログインページにリダイレクト
+          window.location.href = 'login.html';
+        });
       }
     })();
   </script>

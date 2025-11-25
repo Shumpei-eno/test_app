@@ -132,3 +132,27 @@ def get_user_by_username(username: str) -> dict:
     except Exception as e:
         return {"error": f"ユーザー取得に失敗しました: {str(e)}"}
 
+
+def get_all_users() -> list:
+    """すべてのユーザーを取得"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                SELECT id, username, created_at, updated_at
+                FROM users
+                ORDER BY created_at DESC
+            """)
+            users = cursor.fetchall()
+            
+            result = []
+            for user in users:
+                result.append({
+                    "id": user["id"],
+                    "username": user["username"],
+                    "created_at": user["created_at"].isoformat() if user["created_at"] else None,
+                    "updated_at": user["updated_at"].isoformat() if user["updated_at"] else None
+                })
+            return result
+    except Exception as e:
+        return [{"error": f"ユーザー一覧の取得に失敗しました: {str(e)}"}]
+

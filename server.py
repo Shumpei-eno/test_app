@@ -9,7 +9,7 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 import nbformat
 from salary_calc import process_monthly_income, check_input_completion
-from database import init_database, create_user, verify_user
+from database import init_database, create_user, verify_user, get_all_users, get_user_by_username
 
 BASE_DIR = Path(__file__).parent
 NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"  # 存在しない場合はエラーになるが、/run-notebookエンドポイントが呼ばれた時のみ
@@ -274,6 +274,40 @@ def login_endpoint():
         return jsonify({"message": "ログインに成功しました", "user": result}), 200
     except Exception as exc:
         app.logger.exception("ログイン中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/users", methods=["GET", "OPTIONS"])
+def get_users_endpoint():
+    """すべてのユーザーを取得するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        users = get_all_users()
+        if users and len(users) == 1 and "error" in users[0]:
+            return jsonify(users[0]), 500
+        return jsonify({"users": users, "count": len(users)}), 200
+    except Exception as exc:
+        app.logger.exception("ユーザー一覧取得中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/users/<username>", methods=["GET", "OPTIONS"])
+def get_user_endpoint(username):
+    """特定のユーザーを取得するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        user = get_user_by_username(username)
+        if user is None:
+            return jsonify({"error": "ユーザーが見つかりません"}), 404
+        if "error" in user:
+            return jsonify(user), 500
+        return jsonify({"user": user}), 200
+    except Exception as exc:
+        app.logger.exception("ユーザー取得中にエラーが発生しました")
         return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
 
 
