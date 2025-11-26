@@ -105,6 +105,18 @@ def init_database():
             """)
         except:
             pass
+        try:
+            cursor.execute("""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='properties' AND column_name='property_url') THEN
+                        ALTER TABLE properties ADD COLUMN property_url VARCHAR(1000);
+                    END IF;
+                END $$;
+            """)
+        except:
+            pass
         
         # 物件テーブルのインデックス作成
         cursor.execute("""
@@ -231,15 +243,15 @@ def get_all_users() -> list:
 def create_property(user_id: int, mansion_name: str = None, address: str = None, 
                     layout: str = None, area: float = None, floor: str = None,
                     building_age: str = None, rent: int = None,
-                    time_to_station: int = None, real_rent: float = None) -> dict:
+                    time_to_station: int = None, real_rent: float = None, property_url: str = None) -> dict:
     """物件情報を作成（ユーザーIDに紐づける）"""
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
-                INSERT INTO properties (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, created_at
-            """, (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent))
+                INSERT INTO properties (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, property_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, property_url, created_at
+            """, (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, property_url))
             result = cursor.fetchone()
             return {
                 "id": result["id"],
@@ -253,6 +265,7 @@ def create_property(user_id: int, mansion_name: str = None, address: str = None,
                 "rent": result["rent"],
                 "time_to_station": result["time_to_station"],
                 "real_rent": float(result["real_rent"]) if result["real_rent"] else None,
+                "property_url": result.get("property_url"),
                 "created_at": result["created_at"].isoformat() if result["created_at"] else None
             }
     except Exception as e:
@@ -264,7 +277,7 @@ def get_properties_by_user_id(user_id: int) -> list:
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
-                SELECT id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, created_at, updated_at
+                SELECT id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, property_url, created_at, updated_at
                 FROM properties
                 WHERE user_id = %s
                 ORDER BY created_at DESC
@@ -285,6 +298,7 @@ def get_properties_by_user_id(user_id: int) -> list:
                     "rent": prop["rent"],
                     "time_to_station": prop["time_to_station"],
                     "real_rent": float(prop["real_rent"]) if prop["real_rent"] else None,
+                    "property_url": prop.get("property_url"),
                     "created_at": prop["created_at"].isoformat() if prop["created_at"] else None,
                     "updated_at": prop["updated_at"].isoformat() if prop["updated_at"] else None
                 })

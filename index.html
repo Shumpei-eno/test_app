@@ -1451,6 +1451,10 @@
                   <label class="fixed-box-label">築年数</label>
                   <input type="text" class="fixed-box-input" id="building-age-input" placeholder="例: 10年">
                 </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">物件URL</label>
+                  <input type="text" class="fixed-box-input" id="property-url-input" placeholder="物件詳細のアドレスをコピー">
+                </div>
               </div>
               <button type="button" class="search-button" id="register-property-button" style="margin-top: 12px;">物件を登録</button>
               <div class="fixed-box-error" id="property-register-error" style="display: none; color: #ff6b6b; font-size: 0.9rem; margin-top: 8px;"></div>
@@ -1465,6 +1469,7 @@
             <div class="property-item-loading">読み込み中...</div>
           </div>
           <div class="property-chart-container" id="property-chart-container" style="display: none;">
+            <div style="font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 12px;">物件比較方法は検討中…</div>
             <div class="property-chart-title">実質家賃比較チャート</div>
             <canvas id="propertyChart"></canvas>
           </div>
@@ -2468,6 +2473,7 @@
             const area = document.getElementById('area-input')?.value.trim() || null;
             const floor = document.getElementById('floor-input')?.value.trim() || null;
             const buildingAge = document.getElementById('building-age-input')?.value.trim() || null;
+            const propertyUrl = document.getElementById('property-url-input')?.value.trim() || null;
             const rent = document.getElementById('rent-input')?.value.trim() || null;
             const timeToStationInput = document.getElementById('time-input')?.value.trim() || null;
             const realRentText = document.getElementById('real-rent-result')?.textContent.trim() || null;
@@ -2547,6 +2553,7 @@
                   area: area ? parseFloat(area) : null,
                   floor: floor,
                   building_age: buildingAge,
+                  property_url: propertyUrl,
                   rent: rent ? parseInt(rent) : null,
                   time_to_station: timeToStation ? parseInt(timeToStation) : null,
                   real_rent: realRent,
@@ -2571,6 +2578,7 @@
                 document.getElementById('area-input').value = '';
                 document.getElementById('floor-input').value = '';
                 document.getElementById('building-age-input').value = '';
+                document.getElementById('property-url-input').value = '';
                 
                 // 物件一覧を即座に更新（リアルタイム反映）
                 await loadPropertyList();
@@ -2799,6 +2807,14 @@
                         <div class="property-item-detail">
                           <div class="property-item-detail-label">築年数</div>
                           <div class="property-item-detail-value">${property.building_age}</div>
+                        </div>
+                      ` : ''}
+                      ${property.property_url ? `
+                        <div class="property-item-detail">
+                          <div class="property-item-detail-label">詳細はこちら</div>
+                          <div class="property-item-detail-value">
+                            <a href="${property.property_url}" target="_blank" rel="noopener noreferrer" style="color: #5fb3d3; text-decoration: underline; cursor: pointer;">クリック</a>
+                          </div>
                         </div>
                       ` : ''}
                       ${property.rent ? `

@@ -334,7 +334,8 @@ def create_property_endpoint():
             building_age=payload.get("building_age"),
             rent=payload.get("rent"),
             time_to_station=payload.get("time_to_station"),
-            real_rent=payload.get("real_rent")
+            real_rent=payload.get("real_rent"),
+            property_url=payload.get("property_url")
         )
         
         if "error" in result:
