@@ -2301,8 +2301,20 @@
         }
       }
       
-      // ページ読み込み時に物件一覧を表示
-      loadPropertyList();
+      // ページ読み込み時に物件一覧を表示（DOMContentLoadedを待つ）
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          // 少し待ってから読み込み（他の初期化処理を待つ）
+          setTimeout(() => {
+            loadPropertyList();
+          }, 300);
+        });
+      } else {
+        // 既に読み込み完了している場合
+        setTimeout(() => {
+          loadPropertyList();
+        }, 300);
+      }
     })();
   </script>
 </body>
