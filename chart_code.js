@@ -599,8 +599,8 @@ function displayCommuteSalaryTable(stations, times, transfers, minuteSalary) {
   const salaryValues = stations.map((station, index) => {
     const time = times && times[index] !== null && times[index] !== undefined ? times[index] : 0;
     const transfer = transfers && transfers[index] !== null && transfers[index] !== undefined ? transfers[index] : 0;
-    // 時間 + (乗換回数 × 7)
-    const adjustedTime = time + ((transfer * 7)) * 2;
+    // 時間 + (乗換回数 × 7) を往復にするため2倍
+    const adjustedTime = (time + (transfer * 7)) * 2;
     // 分給 × 調整後の時間
     return Math.round(minuteSalary * adjustedTime);
   });

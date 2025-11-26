@@ -70,7 +70,7 @@ async function displaySalaryChart(stations, times, transfers) {
           y: {
             title: {
               display: true,
-              text: '分給換算値（円）'
+              text: '給料換算（円）'
             },
             beginAtZero: true,
             ticks: {
