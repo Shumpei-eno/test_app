@@ -330,6 +330,8 @@ def create_property_endpoint():
             address=payload.get("address"),
             layout=payload.get("layout"),
             area=payload.get("area"),
+            floor=payload.get("floor"),
+            building_age=payload.get("building_age"),
             rent=payload.get("rent"),
             time_to_station=payload.get("time_to_station"),
             real_rent=payload.get("real_rent")

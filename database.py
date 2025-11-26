@@ -70,6 +70,8 @@ def init_database():
                 address VARCHAR(500),
                 layout VARCHAR(50),
                 area DECIMAL(10, 2),
+                floor VARCHAR(50),
+                building_age VARCHAR(50),
                 rent INTEGER,
                 time_to_station INTEGER,
                 real_rent DECIMAL(10, 2),
@@ -77,6 +79,32 @@ def init_database():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # 既存のテーブルにカラムを追加（存在しない場合のみ）
+        try:
+            cursor.execute("""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='properties' AND column_name='floor') THEN
+                        ALTER TABLE properties ADD COLUMN floor VARCHAR(50);
+                    END IF;
+                END $$;
+            """)
+        except:
+            pass
+        try:
+            cursor.execute("""
+                DO $$ 
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                                   WHERE table_name='properties' AND column_name='building_age') THEN
+                        ALTER TABLE properties ADD COLUMN building_age VARCHAR(50);
+                    END IF;
+                END $$;
+            """)
+        except:
+            pass
         
         # 物件テーブルのインデックス作成
         cursor.execute("""
@@ -183,16 +211,17 @@ def get_all_users() -> list:
 
 
 def create_property(user_id: int, mansion_name: str = None, address: str = None, 
-                    layout: str = None, area: float = None, rent: int = None,
+                    layout: str = None, area: float = None, floor: str = None,
+                    building_age: str = None, rent: int = None,
                     time_to_station: int = None, real_rent: float = None) -> dict:
     """物件情報を作成（ユーザーIDに紐づける）"""
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
-                INSERT INTO properties (user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent, created_at
-            """, (user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent))
+                INSERT INTO properties (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, created_at
+            """, (user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent))
             result = cursor.fetchone()
             return {
                 "id": result["id"],
@@ -201,6 +230,8 @@ def create_property(user_id: int, mansion_name: str = None, address: str = None,
                 "address": result["address"],
                 "layout": result["layout"],
                 "area": float(result["area"]) if result["area"] else None,
+                "floor": result.get("floor"),
+                "building_age": result.get("building_age"),
                 "rent": result["rent"],
                 "time_to_station": result["time_to_station"],
                 "real_rent": float(result["real_rent"]) if result["real_rent"] else None,
@@ -215,7 +246,7 @@ def get_properties_by_user_id(user_id: int) -> list:
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
-                SELECT id, user_id, mansion_name, address, layout, area, rent, time_to_station, real_rent, created_at, updated_at
+                SELECT id, user_id, mansion_name, address, layout, area, floor, building_age, rent, time_to_station, real_rent, created_at, updated_at
                 FROM properties
                 WHERE user_id = %s
                 ORDER BY created_at DESC
@@ -231,6 +262,8 @@ def get_properties_by_user_id(user_id: int) -> list:
                     "address": prop["address"],
                     "layout": prop["layout"],
                     "area": float(prop["area"]) if prop["area"] else None,
+                    "floor": prop.get("floor"),
+                    "building_age": prop.get("building_age"),
                     "rent": prop["rent"],
                     "time_to_station": prop["time_to_station"],
                     "real_rent": float(prop["real_rent"]) if prop["real_rent"] else None,
