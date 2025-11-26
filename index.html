@@ -2189,16 +2189,17 @@
           const data = await response.json();
           
           if (response.ok && data.properties) {
-            if (data.properties.length === 0) {
+            // エラーオブジェクトを除外
+            const validProperties = data.properties.filter(p => !p.error);
+            
+            if (validProperties.length === 0) {
               container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
+              container.style.opacity = '1';
             } else {
-              container.innerHTML = data.properties.map(property => {
-                if (property.error) {
-                  return `<div class="property-item-empty">エラー: ${property.error}</div>`;
-                }
-                
+              // 物件一覧を生成（フェードインアニメーション付き）
+              const propertiesHTML = validProperties.map((property, index) => {
                 return `
-                  <div class="property-item" data-property-id="${property.id}">
+                  <div class="property-item" data-property-id="${property.id}" style="opacity: 0; animation: fadeInUp 0.4s ease-out ${index * 0.1}s forwards;">
                     <div class="property-item-header">
                       <div>
                         <div class="property-item-name">${property.mansion_name || '（マンション名未入力）'}</div>
