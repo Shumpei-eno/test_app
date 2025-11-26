@@ -266,7 +266,7 @@ function displayRealRentTable(stations, rents, times, transfers, minuteSalary) {
     const time = times && times[index] !== null && times[index] !== undefined ? times[index] : 0;
     const transfer = transfers && transfers[index] !== null && transfers[index] !== undefined ? transfers[index] : 0;
     // 時間 + (乗換回数 × 7)
-    const adjustedTime = time + (transfer * 7);
+    const adjustedTime = (time + (transfer * 7)) * 2;
     
     // 通勤時間の分給換算（円）
     const commuteSalaryValue = minuteSalary * adjustedTime;
