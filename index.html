@@ -2129,15 +2129,21 @@
           return;
         }
         
+        // 駅が選択されているかチェック
+        const railway = railwaySelect ? railwaySelect.value : '';
+        const line = lineSelect ? lineSelect.value : '';
+        const stationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]:checked');
+        
+        if (!railway || !line || stationCheckboxes.length === 0) {
+          alert('駅を選択してください');
+          return;
+        }
+        
         const rentValue = rentInput ? rentInput.value.trim() : '';
         const timeValue = timeInput ? timeInput.value.trim() : '';
         
         // 選択された駅の神谷町までの時間を取得
         let timeToKamiyacho = null;
-        const railway = railwaySelect ? railwaySelect.value : '';
-        const line = lineSelect ? lineSelect.value : '';
-        const stationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]:checked');
-        
         if (stationCheckboxes.length > 0 && railway && line) {
           const selectedStation = stationCheckboxes[0].value;
           try {
