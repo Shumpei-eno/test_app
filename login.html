@@ -222,6 +222,17 @@
     .register-link a:hover {
       color: #7fc3e3;
     }
+    /* サイト作成者表示 */
+    .site-creator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      color: #888;
+      font-size: 0.9rem;
+      text-align: right;
+      animation: fadeInUp 1s ease-out 0.5s both;
+    }
   </style>
 </head>
 <body>
@@ -277,6 +288,9 @@
       アカウントをお持ちでない方は<a href="#" id="register-link">新規登録</a>
     </div>
   </div>
+
+  <!-- サイト作成者表示 -->
+  <div class="site-creator">サイト作成者：いーの</div>
 
   <script>
     // ログインフォームの処理
