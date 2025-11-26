@@ -442,7 +442,7 @@
       top: 0;
       left: calc(80% + 20px);
       width: 248px;
-      max-height: 90vh;
+      min-height: 40px;
       padding: 16px;
       background: rgba(42, 45, 62, 0.95);
       border: 1px solid #3a3d4e;
@@ -454,21 +454,25 @@
       font-size: 1.1rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       z-index: 10;
+    }
+    .property-register-form {
+      max-height: 400px;
       overflow-y: auto;
       overflow-x: hidden;
+      padding-right: 4px;
     }
-    .iframe-fixed-box::-webkit-scrollbar {
+    .property-register-form::-webkit-scrollbar {
       width: 8px;
     }
-    .iframe-fixed-box::-webkit-scrollbar-track {
+    .property-register-form::-webkit-scrollbar-track {
       background: rgba(26, 29, 46, 0.5);
       border-radius: 4px;
     }
-    .iframe-fixed-box::-webkit-scrollbar-thumb {
+    .property-register-form::-webkit-scrollbar-thumb {
       background: rgba(95, 179, 211, 0.5);
       border-radius: 4px;
     }
-    .iframe-fixed-box::-webkit-scrollbar-thumb:hover {
+    .property-register-form::-webkit-scrollbar-thumb:hover {
       background: rgba(95, 179, 211, 0.7);
     }
     .fixed-box-title {
@@ -1396,29 +1400,31 @@
               <div class="fixed-box-title">実質家賃の算出</div>
               <div class="fixed-box-result-value" id="real-rent-result">-</div>
               <div style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 12px; margin-bottom: 12px;">↓検討する場合は登録</div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">マンション名</label>
-                <input type="text" class="fixed-box-input" id="mansion-name-input" placeholder="例: サンプルマンション">
-              </div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">住所</label>
-                <input type="text" class="fixed-box-input" id="address-input" placeholder="例: 東京都渋谷区...">
-              </div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">間取り</label>
-                <input type="text" class="fixed-box-input" id="layout-input" placeholder="例: 2LDK">
-              </div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">専有面積</label>
-                <input type="text" class="fixed-box-input" id="area-input" placeholder="例: 60.5">
-              </div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">階</label>
-                <input type="text" class="fixed-box-input" id="floor-input" placeholder="例: 5階">
-              </div>
-              <div class="fixed-box-input-group">
-                <label class="fixed-box-label">築年数</label>
-                <input type="text" class="fixed-box-input" id="building-age-input" placeholder="例: 10年">
+              <div class="property-register-form">
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">マンション名</label>
+                  <input type="text" class="fixed-box-input" id="mansion-name-input" placeholder="例: サンプルマンション">
+                </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">住所</label>
+                  <input type="text" class="fixed-box-input" id="address-input" placeholder="例: 東京都渋谷区...">
+                </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">間取り</label>
+                  <input type="text" class="fixed-box-input" id="layout-input" placeholder="例: 2LDK">
+                </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">専有面積</label>
+                  <input type="text" class="fixed-box-input" id="area-input" placeholder="例: 60.5">
+                </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">階</label>
+                  <input type="text" class="fixed-box-input" id="floor-input" placeholder="例: 5階">
+                </div>
+                <div class="fixed-box-input-group">
+                  <label class="fixed-box-label">築年数</label>
+                  <input type="text" class="fixed-box-input" id="building-age-input" placeholder="例: 10年">
+                </div>
               </div>
               <button type="button" class="search-button" id="register-property-button" style="margin-top: 12px;">物件を登録</button>
               <div class="fixed-box-error" id="property-register-error" style="display: none; color: #ff6b6b; font-size: 0.9rem; margin-top: 8px;"></div>
