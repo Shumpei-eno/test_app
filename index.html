@@ -416,6 +416,28 @@
     .property-list-container {
       transition: opacity 0.3s ease-in;
     }
+    .property-chart-container {
+      max-width: 1400px;
+      margin: 40px auto 0;
+      padding: 30px;
+      background: rgba(42, 45, 62, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(95, 179, 211, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .property-chart-title {
+      font-size: 1.5rem;
+      color: #5fb3d3;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(95, 179, 211, 0.3);
+    }
+    .property-chart-container canvas {
+      max-height: 400px;
+    }
     .suumo-iframe-wrapper {
       width: 100%;
       margin-top: 20px;
@@ -1441,6 +1463,10 @@
           <div class="property-list-title">検討物件一覧</div>
           <div class="property-list-container" id="property-list-container">
             <div class="property-item-loading">読み込み中...</div>
+          </div>
+          <div class="property-chart-container" id="property-chart-container" style="display: none;">
+            <div class="property-chart-title">実質家賃比較チャート</div>
+            <canvas id="propertyChart"></canvas>
           </div>
         </div>
       </div>
@@ -2505,6 +2531,15 @@
             if (validProperties.length === 0) {
               container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
               container.style.opacity = '1';
+              // チャートを非表示
+              const chartContainer = document.getElementById('property-chart-container');
+              if (chartContainer) {
+                chartContainer.style.display = 'none';
+              }
+              if (propertyChart) {
+                propertyChart.destroy();
+                propertyChart = null;
+              }
             } else {
               // 物件一覧を生成（フェードインアニメーション付き）
               const propertiesHTML = validProperties.map((property, index) => {
@@ -2591,6 +2626,9 @@
                   deleteProperty(userId, mansionName);
                 });
               });
+              
+              // チャートを更新
+              updatePropertyChart(validProperties);
             }
           } else {
             container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
@@ -2646,17 +2684,13 @@
           
           if (response.ok && !data.error) {
             // 削除成功、アニメーション完了後にDOMから削除
-            setTimeout(() => {
+            setTimeout(async () => {
               if (targetItem && targetItem.parentNode) {
                 targetItem.parentNode.removeChild(targetItem);
               }
               
-              // 物件がなくなった場合のメッセージ表示
-              const remainingItems = container.querySelectorAll('.property-item');
-              if (remainingItems.length === 0) {
-                container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
-                container.style.opacity = '1';
-              }
+              // 物件一覧を再読み込みしてチャートを更新
+              await loadPropertyList();
             }, 300);
           } else {
             // 削除失敗、アニメーションを元に戻す
