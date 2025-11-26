@@ -2346,8 +2346,42 @@
             const floor = document.getElementById('floor-input')?.value.trim() || null;
             const buildingAge = document.getElementById('building-age-input')?.value.trim() || null;
             const rent = document.getElementById('rent-input')?.value.trim() || null;
-            const timeToStation = document.getElementById('time-input')?.value.trim() || null;
+            const timeToStationInput = document.getElementById('time-input')?.value.trim() || null;
             const realRentText = document.getElementById('real-rent-result')?.textContent.trim() || null;
+            
+            // 選択された駅の神谷町駅までの時間を取得
+            let timeToKamiyacho = null;
+            const railway = railwaySelect ? railwaySelect.value : '';
+            const line = lineSelect ? lineSelect.value : '';
+            const stationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]:checked');
+            
+            if (stationCheckboxes.length > 0 && railway && line) {
+              const selectedStation = stationCheckboxes[0].value;
+              try {
+                const data = await loadFixData();
+                if (data) {
+                  const details = getStationDetails(data, railway, line, selectedStation);
+                  timeToKamiyacho = details.time;
+                }
+              } catch (error) {
+                console.error('駅情報の取得に失敗しました:', error);
+              }
+            }
+            
+            // time_to_station = 対象駅までの時間 + 神谷町駅までの時間
+            let timeToStation = null;
+            if (timeToStationInput) {
+              const timeToStationValue = parseInt(timeToStationInput);
+              if (!isNaN(timeToStationValue)) {
+                if (timeToKamiyacho !== null && timeToKamiyacho !== undefined) {
+                  timeToStation = timeToStationValue + timeToKamiyacho;
+                } else {
+                  timeToStation = timeToStationValue;
+                }
+              }
+            } else if (timeToKamiyacho !== null && timeToKamiyacho !== undefined) {
+              timeToStation = timeToKamiyacho;
+            }
             
             // 実質家賃を数値に変換（「-」や空文字の場合はnull）
             let realRent = null;
@@ -2521,7 +2555,7 @@
                       ` : ''}
                       ${property.time_to_station ? `
                         <div class="property-item-detail">
-                          <div class="property-item-detail-label">駅までの時間</div>
+                          <div class="property-item-detail-label">神谷町駅までの時間</div>
                           <div class="property-item-detail-value">${property.time_to_station}分</div>
                         </div>
                       ` : ''}
