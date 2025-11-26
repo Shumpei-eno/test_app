@@ -1039,20 +1039,54 @@
     .tutorial-section {
       max-width: 1200px;
       margin: 0 auto 60px;
-      padding: 40px 24px;
+      padding: 0;
       background: rgba(42, 45, 62, 0.8);
       backdrop-filter: blur(10px);
       border-radius: 16px;
       border: 1px solid rgba(95, 179, 211, 0.2);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
     }
     .tutorial-title {
       font-size: clamp(1.8rem, 3vw, 2.4rem);
       color: #60a5fa;
       text-align: center;
-      margin-bottom: 40px;
+      margin: 0;
+      padding: 24px;
       font-weight: 600;
       letter-spacing: 0.05em;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+      background: rgba(42, 45, 62, 0.9);
+      border-bottom: 1px solid rgba(95, 179, 211, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .tutorial-title:hover {
+      background: rgba(42, 45, 62, 1);
+      color: #7fc3e3;
+    }
+    .tutorial-title::after {
+      content: '▼';
+      font-size: 1rem;
+      transition: transform 0.3s ease;
+      color: #60a5fa;
+    }
+    .tutorial-section.expanded .tutorial-title::after {
+      transform: rotate(180deg);
+    }
+    .tutorial-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+      padding: 0 24px;
+    }
+    .tutorial-section.expanded .tutorial-content {
+      max-height: 5000px;
+      padding: 40px 24px;
     }
     .tutorial-main-section {
       margin-bottom: 40px;
@@ -1162,10 +1196,11 @@
     <h1>神谷町駅からの最適居住エリア検索</h1>
     
     <!-- チュートリアルセクション -->
-    <div class="tutorial-section">
-      <h2 class="tutorial-title">使い方</h2>
+    <div class="tutorial-section" id="tutorial-section">
+      <h2 class="tutorial-title" id="tutorial-title">使い方</h2>
       
-      <div class="tutorial-main-section">
+      <div class="tutorial-content">
+        <div class="tutorial-main-section">
         <h3 class="tutorial-main-title">１　大まかな居住エリア（駅）を選定しよう</h3>
         
         <div class="tutorial-step">
@@ -1227,6 +1262,7 @@
             <p>検討物件どうしを比較して理想の住居を見つけよう！</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
     
@@ -1366,6 +1402,18 @@
     </div>
   </section>
   <script>
+    // チュートリアルの折りたたみ機能
+    (function() {
+      const tutorialSection = document.getElementById('tutorial-section');
+      const tutorialTitle = document.getElementById('tutorial-title');
+      
+      if (tutorialTitle && tutorialSection) {
+        tutorialTitle.addEventListener('click', function() {
+          tutorialSection.classList.toggle('expanded');
+        });
+      }
+    })();
+    
     // ログインチェック（未ログインの場合はlogin.htmlにリダイレクト）
     (function() {
       // セッションストレージまたはローカルストレージでログイン状態を確認
