@@ -2506,6 +2506,132 @@
       // 物件登録ボタンを設定
       setupRegisterPropertyButton();
       
+      // 物件チャートの変数
+      let propertyChart = null;
+      
+      // 物件チャートを更新する関数
+      function updatePropertyChart(properties) {
+        try {
+          const chartContainer = document.getElementById('property-chart-container');
+          const chartCanvas = document.getElementById('propertyChart');
+          
+          if (!chartContainer || !chartCanvas) {
+            console.warn('チャートコンテナまたはキャンバスが見つかりません');
+            return;
+          }
+          
+          // 実質家賃がある物件のみをフィルタリング
+          const propertiesWithRealRent = properties.filter(p => p.real_rent !== null && p.real_rent !== undefined);
+          
+          if (propertiesWithRealRent.length === 0) {
+            chartContainer.style.display = 'none';
+            if (propertyChart) {
+              propertyChart.destroy();
+              propertyChart = null;
+            }
+            return;
+          }
+          
+          // チャートコンテナを表示
+          chartContainer.style.display = 'block';
+          
+          // マンション名と実質家賃を抽出
+          const labels = propertiesWithRealRent.map(p => p.mansion_name || '（マンション名未入力）');
+          const realRentValues = propertiesWithRealRent.map(p => Math.round(p.real_rent));
+          
+          // 既存のチャートを破棄
+          if (propertyChart) {
+            propertyChart.destroy();
+          }
+          
+          // Chart.jsが読み込まれているか確認
+          if (typeof Chart === 'undefined') {
+            console.error('Chart.jsが読み込まれていません');
+            return;
+          }
+          
+          // チャートを作成
+          const ctx = chartCanvas.getContext('2d');
+          propertyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: '実質家賃（円）',
+                data: realRentValues,
+                backgroundColor: 'rgba(95, 179, 211, 0.8)',
+                borderColor: 'rgba(95, 179, 211, 1)',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    color: '#e0e4eb',
+                    font: {
+                      size: 14
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `実質家賃: ${context.parsed.y.toLocaleString()}円`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  ticks: {
+                    color: '#e0e4eb',
+                    maxRotation: 45,
+                    minRotation: 45,
+                    font: {
+                      size: 11
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(95, 179, 211, 0.2)'
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    color: '#e0e4eb',
+                    callback: function(value) {
+                      return value.toLocaleString() + '円';
+                    },
+                    font: {
+                      size: 12
+                    }
+                  },
+                  grid: {
+                    color: 'rgba(95, 179, 211, 0.2)'
+                  },
+                  title: {
+                    display: true,
+                    text: '実質家賃（円）',
+                    color: '#5fb3d3',
+                    font: {
+                      size: 14,
+                      weight: 'bold'
+                    }
+                  }
+                }
+              }
+            }
+          });
+        } catch (error) {
+          console.error('チャート更新エラー:', error);
+        }
+      }
+      
       // 物件一覧を読み込む関数
       async function loadPropertyList() {
         const container = document.getElementById('property-list-container');
