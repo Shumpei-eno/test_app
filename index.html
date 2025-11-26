@@ -2204,7 +2204,7 @@
                       <div>
                         <div class="property-item-name">${property.mansion_name || '（マンション名未入力）'}</div>
                       </div>
-                      <button class="property-item-delete" onclick="deleteProperty(${property.user_id}, ${JSON.stringify(property.mansion_name || '')})">削除</button>
+                      <button class="property-item-delete" data-user-id="${property.user_id}" data-mansion-name="${(property.mansion_name || '').replace(/"/g, '&quot;')}">削除</button>
                     </div>
                     <div class="property-item-details">
                       ${property.address ? `
@@ -2259,6 +2259,16 @@
               // フェードインアニメーション
               container.style.opacity = '1';
               container.style.transition = 'opacity 0.3s ease-in';
+              
+              // 削除ボタンにイベントリスナーを設定
+              const deleteButtons = container.querySelectorAll('.property-item-delete');
+              deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                  const userId = parseInt(this.getAttribute('data-user-id'));
+                  const mansionName = this.getAttribute('data-mansion-name');
+                  deleteProperty(userId, mansionName);
+                });
+              });
             }
           } else {
             container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
