@@ -1210,21 +1210,21 @@
         <div class="tutorial-step">
           <h4 class="tutorial-step-title">①月給の入力</h4>
           <div class="tutorial-step-content">
-            <p>←後の実質家賃算出に使用します</p>
+            <p>後の実質家賃算出に使用します。</p>
           </div>
         </div>
         
         <div class="tutorial-step">
           <h4 class="tutorial-step-title">②鉄道・沿線を選択</h4>
           <div class="tutorial-step-content">
-            <p>以下のチャートを出良くします。</p>
+            <p>以下のチャートを表示します。</p>
             <ul class="tutorial-chart-list">
               <li>家賃相場（棒グラフ）・神谷町駅までの通勤時間（片道）（線グラフ）・乗換回数（棒グラフの色）</li>
               <li>往復通勤時間の給料換算</li>
               <li>家賃相場と往復通勤時間の給料を考慮した実質家賃</li>
             </ul>
             <div class="tutorial-note">
-              <strong>＊</strong>通勤により得られなかった給料を家賃相場に足し合わせた値を実質家賃と定義
+              <strong>＊</strong>通勤により得られなかった給料を家賃相場に足し合わせた値を実質家賃と定義。
             </div>
           </div>
         </div>
@@ -1253,7 +1253,7 @@
         <div class="tutorial-step">
           <h4 class="tutorial-step-title">③検討物件の登録</h4>
           <div class="tutorial-step-content">
-            <p>検討したい物件のマンション名・住所・間取り・専有面積を入力し検討物件一覧に登録する</p>
+            <p>検討したい物件のマンション名・住所・間取り・専有面積を入力し検討物件一覧に登録する。</p>
             <div class="tutorial-note">
               <strong>＊</strong>②と同様手打ちしてください。
             </div>
@@ -1263,7 +1263,7 @@
         <div class="tutorial-step">
           <h4 class="tutorial-step-title">④検討物件同士の比較</h4>
           <div class="tutorial-step-content">
-            <p>検討物件どうしを比較して理想の住居を見つけよう！</p>
+            <p>検討物件を比較して理想の住居を見つけよう！</p>
           </div>
         </div>
       </div>
@@ -2061,15 +2061,8 @@
       // 少し待ってからチャートとチェックボックスを表示（データ読み込みのため）
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // メインチャートを初期状態で表示
-      const ctx = document.getElementById('myChart');
-      if (ctx && chartContainer) {
-        chartContainer.classList.add('active');
-        myChart = initMainChart(ctx);
-      }
-      
-      // 初期状態では通勤時間の分給換算の表は表示しない
-      // 初期状態では実質家賃チャートと表は表示しない
+      // 初期状態ではチャートを表示しない
+      // 鉄道・沿線が選択されたときにのみチャートを表示
       // await displayStationCheckboxes();
       // await displayChart();
       
