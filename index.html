@@ -1615,9 +1615,9 @@
       const checkboxes = stationCheckboxes.querySelectorAll('input[type="checkbox"]');
       const emptyBox = document.getElementById('empty-box');
       
-      // 初期状態では非表示
-      emptyBox.innerHTML = '';
-      emptyBox.classList.remove('has-content');
+      // 鉄道と沿線が選択されたので、メッセージを表示
+      emptyBox.innerHTML = '<div style="color: #e0e4eb; line-height: 1.8; text-align: center; padding-top: 60px;">駅ごとの詳細情報を表示します</div>';
+      emptyBox.classList.add('has-content');
       
       checkboxes.forEach((checkbox, index) => {
         checkbox.addEventListener('change', async function() {
@@ -1636,9 +1636,9 @@
             // チャートの棒グラフの枠線をハイライト
             highlightChartBar(index);
           } else {
-            // チェックが外された場合、ボックスを非表示
-            emptyBox.innerHTML = '';
-            emptyBox.classList.remove('has-content');
+            // チェックが外された場合、メッセージを表示
+            emptyBox.innerHTML = '<div style="color: #e0e4eb; line-height: 1.8; text-align: center; padding-top: 60px;">駅ごとの詳細情報を表示します</div>';
+            emptyBox.classList.add('has-content');
             
             // チャートのハイライトを解除
             resetChartHighlight();
