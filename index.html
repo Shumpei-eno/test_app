@@ -1034,7 +1034,98 @@
       font-size: 0.9rem;
       cursor: pointer;
       user-select: none;
-  }
+    }
+    /* チュートリアルセクション */
+    .tutorial-section {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      padding: 40px 24px;
+      background: rgba(42, 45, 62, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(95, 179, 211, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .tutorial-title {
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      color: #60a5fa;
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .tutorial-main-section {
+      margin-bottom: 40px;
+    }
+    .tutorial-main-title {
+      font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+      color: #5fb3d3;
+      margin-bottom: 24px;
+      font-weight: 600;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(95, 179, 211, 0.3);
+    }
+    .tutorial-step {
+      margin-bottom: 32px;
+      padding: 24px;
+      background: rgba(26, 29, 46, 0.6);
+      border-radius: 12px;
+      border-left: 4px solid #60a5fa;
+    }
+    .tutorial-step-title {
+      font-size: clamp(1.2rem, 2vw, 1.5rem);
+      color: #60a5fa;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .tutorial-step-content {
+      color: #e0e4eb;
+      line-height: 1.8;
+      font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+    }
+    .tutorial-step-content ol,
+    .tutorial-step-content ul {
+      margin: 12px 0;
+      padding-left: 24px;
+    }
+    .tutorial-step-content li {
+      margin-bottom: 8px;
+    }
+    .tutorial-step-content strong {
+      color: #5fb3d3;
+      font-weight: 600;
+    }
+    .tutorial-note {
+      background: rgba(95, 179, 211, 0.1);
+      border-left: 4px solid #5fb3d3;
+      padding: 16px;
+      margin: 16px 0;
+      border-radius: 8px;
+      color: #e0e4eb;
+      font-size: clamp(0.9rem, 1.3vw, 1rem);
+      line-height: 1.7;
+    }
+    .tutorial-note strong {
+      color: #5fb3d3;
+      font-weight: 600;
+    }
+    .tutorial-chart-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 16px 0;
+    }
+    .tutorial-chart-list li {
+      padding: 8px 0;
+      padding-left: 24px;
+      position: relative;
+    }
+    .tutorial-chart-list li::before {
+      content: '・';
+      position: absolute;
+      left: 8px;
+      color: #5fb3d3;
+      font-weight: bold;
+    }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="chart_code.js"></script>
@@ -1069,6 +1160,76 @@
   <!-- コンテンツセクション -->
   <section class="content-section" id="main-content">
     <h1>神谷町駅からの最適居住エリア検索</h1>
+    
+    <!-- チュートリアルセクション -->
+    <div class="tutorial-section">
+      <h2 class="tutorial-title">使い方</h2>
+      
+      <div class="tutorial-main-section">
+        <h3 class="tutorial-main-title">１　大まかな居住エリア（駅）を選定しよう</h3>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">①月給の入力</h4>
+          <div class="tutorial-step-content">
+            <p>←後の実質家賃算出に使用します</p>
+          </div>
+        </div>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">②鉄道・沿線を選択</h4>
+          <div class="tutorial-step-content">
+            <p>以下のチャートを出良くします。</p>
+            <ul class="tutorial-chart-list">
+              <li>家賃相場（棒グラフ）・神谷町駅までの通勤時間（片道）（線グラフ）・乗換回数（棒グラフの色）</li>
+              <li>往復通勤時間の給料換算</li>
+              <li>家賃相場と往復通勤時間の給料を考慮した実質家賃</li>
+            </ul>
+            <div class="tutorial-note">
+              <strong>＊</strong>通勤により得られなかった給料を家賃相場に足し合わせた値を実質家賃と定義
+            </div>
+          </div>
+        </div>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">➂駅を選択</h4>
+        </div>
+      </div>
+      
+      <div class="tutorial-main-section">
+        <h3 class="tutorial-main-title">２　住居を検討しよう</h3>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">①物件検索サイトsuumで、検討する鉄道・沿線・駅の住居を検索</h4>
+        </div>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">②実質家賃の算出</h4>
+          <div class="tutorial-step-content">
+            <div class="tutorial-note">
+              <strong>＊</strong>suumは埋め込みサイトであり、情報の抽出ができたいため、家賃・対象駅までの時間（分）を入力欄に手打ちしてください。
+            </div>
+          </div>
+        </div>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">③検討物件の登録</h4>
+          <div class="tutorial-step-content">
+            <p>検討したい物件のマンション名・住所・間取り・専有面積を入力し検討物件一覧に登録する</p>
+            <div class="tutorial-note">
+              <strong>＊</strong>②と同様手打ちしてください。
+            </div>
+          </div>
+        </div>
+        
+        <div class="tutorial-step">
+          <h4 class="tutorial-step-title">④検討物件同士の比較</h4>
+          <div class="tutorial-step-content">
+            <p>検討物件どうしを比較して理想の住居を見つけよう！</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <div class="tables">
     <article class="table-card">
       <div class="room-version-title">1ルームver.</div>
