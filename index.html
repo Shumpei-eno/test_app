@@ -2121,6 +2121,14 @@
       // 入力完了をチェックする関数
       async function checkInputCompletion() {
         console.log('checkInputCompletion関数が呼び出されました');
+        
+        // 分給が設定されているかチェック
+        const minuteSalary = typeof getMinuteSalary === 'function' ? getMinuteSalary() : null;
+        if (minuteSalary === null || minuteSalary === undefined) {
+          alert('月収を入力してください');
+          return;
+        }
+        
         const rentValue = rentInput ? rentInput.value.trim() : '';
         const timeValue = timeInput ? timeInput.value.trim() : '';
         
@@ -2193,8 +2201,7 @@
         }
         
         console.log('サーバーにリクエストを送信します');
-        // 分給を取得（change_commute_salary.jsから）
-        const minuteSalary = typeof getMinuteSalary === 'function' ? getMinuteSalary() : null;
+        // 分給は既にチェック済み（関数の最初で取得済み）
         console.log('取得した分給:', minuteSalary);
         
         // 両方の入力がある場合のみサーバーにリクエスト
