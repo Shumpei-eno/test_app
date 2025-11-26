@@ -1333,6 +1333,7 @@
       <h2>１　鉄道・沿線ごとの家賃相場/神谷町駅までの時間及び乗換回数</h2>
       <div class="monthly-income-input">
         <div>
+          <button type="button" id="load-previous-settings-button" class="search-button" style="margin-bottom: 12px; font-size: 0.9rem; padding: 10px 20px;">前回の月収・駅を設定</button>
           <label for="monthly-income">月収を入力（円）</label>
           <div style="font-size: 0.85rem; color: #888; margin-top: 4px; margin-bottom: 8px;">＊手取りとしてください</div>
           <div style="display: flex; align-items: center; gap: 10px;">
@@ -2359,6 +2360,77 @@
       // 検索ボタンを設定
       setupSearchButton();
       
+      // 前回の月収・駅を設定ボタンのイベントリスナー
+      const loadPreviousSettingsButton = document.getElementById('load-previous-settings-button');
+      if (loadPreviousSettingsButton) {
+        loadPreviousSettingsButton.addEventListener('click', async function() {
+          const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+          if (!userId) {
+            alert('ログイン情報が見つかりません。再度ログインしてください。');
+            return;
+          }
+          
+          try {
+            const response = await fetch(`/api/user-settings/${userId}`);
+            const data = await response.json();
+            
+            if (response.ok && data.settings) {
+              const settings = data.settings;
+              
+              // 月収を設定（分給から逆算）
+              if (settings.minute_salary) {
+                // 分給から月収を逆算: 月収 = 分給 * 20日 * 7.75時間 * 60分
+                const monthlyIncome = settings.minute_salary * 20 * 7.75 * 60;
+                if (monthlyIncomeInput) {
+                  monthlyIncomeInput.value = Math.round(monthlyIncome);
+                  // 分給を計算して表示
+                  await calculateAndDisplayMinuteSalary(monthlyIncomeInput.value);
+                }
+              }
+              
+              // 鉄道を設定
+              if (settings.railway && railwaySelect) {
+                railwaySelect.value = settings.railway;
+                // 沿線オプションを更新
+                renderLineOptions(settings.railway);
+                // 少し待ってから沿線を設定
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // 沿線を設定
+                if (settings.line && lineSelect) {
+                  lineSelect.value = settings.line;
+                  // チャートとチェックボックスを表示
+                  await displayStationCheckboxes();
+                  await displayChart();
+                  
+                  // 少し待ってから駅を選択
+                  await new Promise(resolve => setTimeout(resolve, 200));
+                  
+                  // 駅を選択
+                  if (settings.station) {
+                    const stationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]');
+                    stationCheckboxes.forEach(checkbox => {
+                      if (checkbox.value === settings.station) {
+                        checkbox.checked = true;
+                        // 駅の詳細情報を表示
+                        displayStationInfo(settings.station);
+                      }
+                    });
+                  }
+                }
+              }
+              
+              alert('前回の設定を読み込みました。');
+            } else {
+              alert('保存された設定が見つかりません。');
+            }
+          } catch (error) {
+            console.error('設定の読み込みエラー:', error);
+            alert('設定の読み込みに失敗しました。');
+          }
+        });
+      }
+      
       // 物件登録ボタンのイベントリスナー
       function setupRegisterPropertyButton() {
         const registerButton = document.getElementById('register-property-button');
@@ -2454,6 +2526,13 @@
             registerButton.disabled = true;
             registerButton.textContent = '登録中...';
             
+            // 現在の分給、鉄道、沿線、駅を取得
+            const minuteSalary = typeof getMinuteSalary === 'function' ? getMinuteSalary() : null;
+            const selectedRailway = railwaySelect ? railwaySelect.value : '';
+            const selectedLine = lineSelect ? lineSelect.value : '';
+            const selectedStationCheckboxes = document.querySelectorAll('#station-checkboxes input[type="checkbox"]:checked');
+            const selectedStation = selectedStationCheckboxes.length > 0 ? selectedStationCheckboxes[0].value : '';
+            
             try {
               const response = await fetch('/api/properties', {
                 method: 'POST',
@@ -2470,7 +2549,11 @@
                   building_age: buildingAge,
                   rent: rent ? parseInt(rent) : null,
                   time_to_station: timeToStation ? parseInt(timeToStation) : null,
-                  real_rent: realRent
+                  real_rent: realRent,
+                  minute_salary: minuteSalary,
+                  railway: selectedRailway,
+                  line: selectedLine,
+                  station: selectedStation
                 })
               });
               

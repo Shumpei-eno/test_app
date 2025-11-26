@@ -9,7 +9,7 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 import nbformat
 from salary_calc import process_monthly_income, check_input_completion
-from database import init_database, create_user, verify_user, get_all_users, get_user_by_username, create_property, get_properties_by_user_id, delete_property
+from database import init_database, create_user, verify_user, get_all_users, get_user_by_username, create_property, get_properties_by_user_id, delete_property, save_user_settings, get_user_settings
 
 BASE_DIR = Path(__file__).parent
 NOTEBOOK_PATH = BASE_DIR / "line_search.ipynb"  # 存在しない場合はエラーになるが、/run-notebookエンドポイントが呼ばれた時のみ
@@ -339,6 +339,22 @@ def create_property_endpoint():
         
         if "error" in result:
             return jsonify(result), 400
+        
+        # 物件登録時にユーザー設定を保存
+        minute_salary = payload.get("minute_salary")
+        railway = payload.get("railway")
+        line = payload.get("line")
+        station = payload.get("station")
+        
+        if minute_salary is not None or railway or line or station:
+            save_user_settings(
+                user_id=user_id,
+                minute_salary=minute_salary,
+                railway=railway,
+                line=line,
+                station=station
+            )
+        
         return jsonify({"message": "物件を登録しました", "property": result}), 201
     except Exception as exc:
         app.logger.exception("物件登録中にエラーが発生しました")
@@ -384,6 +400,24 @@ def delete_property_endpoint():
         return jsonify(result), 200
     except Exception as exc:
         app.logger.exception("物件削除中にエラーが発生しました")
+        return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
+
+
+@app.route("/api/user-settings/<int:user_id>", methods=["GET", "OPTIONS"])
+def get_user_settings_endpoint(user_id):
+    """ユーザー設定を取得するAPIエンドポイント"""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        settings = get_user_settings(user_id)
+        if settings is None:
+            return jsonify({"error": "設定が見つかりません"}), 404
+        if "error" in settings:
+            return jsonify(settings), 500
+        return jsonify({"settings": settings}), 200
+    except Exception as exc:
+        app.logger.exception("ユーザー設定取得中にエラーが発生しました")
         return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
 
 

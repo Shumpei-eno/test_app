@@ -113,6 +113,24 @@ def init_database():
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_properties_created_at ON properties(created_at DESC)
         """)
+        
+        # ユーザー設定テーブルの作成
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_settings (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                minute_salary DECIMAL(10, 2),
+                railway VARCHAR(255),
+                line VARCHAR(255),
+                station VARCHAR(255),
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # ユーザー設定テーブルのインデックス作成
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id)
+        """)
 
 
 def create_user(username: str, password: str) -> dict:
@@ -296,4 +314,61 @@ def delete_property(user_id: int, mansion_name: str) -> dict:
                 return {"error": "物件が見つからないか、削除権限がありません"}
     except Exception as e:
         return {"error": f"物件削除に失敗しました: {str(e)}"}
+
+
+def save_user_settings(user_id: int, minute_salary: float = None, railway: str = None, 
+                       line: str = None, station: str = None) -> dict:
+    """ユーザー設定を保存または更新"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO user_settings (user_id, minute_salary, railway, line, station)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (user_id) 
+                DO UPDATE SET 
+                    minute_salary = EXCLUDED.minute_salary,
+                    railway = EXCLUDED.railway,
+                    line = EXCLUDED.line,
+                    station = EXCLUDED.station,
+                    updated_at = CURRENT_TIMESTAMP
+                RETURNING id, user_id, minute_salary, railway, line, station, updated_at
+            """, (user_id, minute_salary, railway, line, station))
+            result = cursor.fetchone()
+            return {
+                "id": result["id"],
+                "user_id": result["user_id"],
+                "minute_salary": float(result["minute_salary"]) if result["minute_salary"] else None,
+                "railway": result["railway"],
+                "line": result["line"],
+                "station": result["station"],
+                "updated_at": result["updated_at"].isoformat() if result["updated_at"] else None
+            }
+    except Exception as e:
+        return {"error": f"ユーザー設定の保存に失敗しました: {str(e)}"}
+
+
+def get_user_settings(user_id: int) -> dict:
+    """ユーザー設定を取得"""
+    try:
+        with get_db_cursor() as cursor:
+            cursor.execute("""
+                SELECT id, user_id, minute_salary, railway, line, station, updated_at
+                FROM user_settings
+                WHERE user_id = %s
+            """, (user_id,))
+            result = cursor.fetchone()
+            
+            if result:
+                return {
+                    "id": result["id"],
+                    "user_id": result["user_id"],
+                    "minute_salary": float(result["minute_salary"]) if result["minute_salary"] else None,
+                    "railway": result["railway"],
+                    "line": result["line"],
+                    "station": result["station"],
+                    "updated_at": result["updated_at"].isoformat() if result["updated_at"] else None
+                }
+            return None
+    except Exception as e:
+        return {"error": f"ユーザー設定の取得に失敗しました: {str(e)}"}
 
