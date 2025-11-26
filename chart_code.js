@@ -592,7 +592,7 @@ function displayCommuteSalaryTable(stations, times, transfers, minuteSalary) {
   // カラム名を固定表示するヘッダーを追加
   let html = '<div class="commute-salary-table-header">';
   html += '<div class="commute-salary-table-header-cell">駅名</div>';
-  html += '<div class="commute-salary-table-header-cell">分給換算値（円）</div>';
+  html += '<div class="commute-salary-table-header-cell">給料換算（円）</div>';
   html += '</div>';
 
   // 分給換算値を計算
@@ -600,7 +600,7 @@ function displayCommuteSalaryTable(stations, times, transfers, minuteSalary) {
     const time = times && times[index] !== null && times[index] !== undefined ? times[index] : 0;
     const transfer = transfers && transfers[index] !== null && transfers[index] !== undefined ? transfers[index] : 0;
     // 時間 + (乗換回数 × 7)
-    const adjustedTime = time + (transfer * 7);
+    const adjustedTime = time + ((transfer * 7)) * 2;
     // 分給 × 調整後の時間
     return Math.round(minuteSalary * adjustedTime);
   });
