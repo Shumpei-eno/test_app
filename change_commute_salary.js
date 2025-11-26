@@ -34,7 +34,7 @@ async function displaySalaryChart(stations, times, transfers) {
       data: {
         labels: emptyStations,
         datasets: [{
-          label: '分給換算値（円）',
+          label: '給料換算（円）',
           data: emptySalaryValues,
           backgroundColor: 'rgba(95, 179, 211, 0.8)',
           borderColor: 'rgba(95, 179, 211, 1)',
@@ -51,7 +51,7 @@ async function displaySalaryChart(stations, times, transfers) {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return `分給換算値: ${Math.round(context.parsed.y).toLocaleString()}円`;
+                return `給料換算: ${Math.round(context.parsed.y).toLocaleString()}円`;
               }
             }
           }
@@ -90,7 +90,7 @@ async function displaySalaryChart(stations, times, transfers) {
     const time = times && times[index] !== null && times[index] !== undefined ? times[index] : 0;
     const transfer = transfers && transfers[index] !== null && transfers[index] !== undefined ? transfers[index] : 0;
     // 時間 + (乗換回数 × 7)
-    const adjustedTime = time + (transfer * 7);
+    const adjustedTime = (time + (transfer * 7)) * 2;
     // 分給 × 調整後の時間
     return currentMinuteSalary * adjustedTime;
   });
@@ -102,7 +102,7 @@ async function displaySalaryChart(stations, times, transfers) {
     data: {
       labels: stations,
       datasets: [{
-        label: '分給換算値（円）',
+        label: '給料換算（円）',
         data: salaryValues,
         backgroundColor: 'rgba(95, 179, 211, 0.8)',
         borderColor: 'rgba(95, 179, 211, 1)',
@@ -119,7 +119,7 @@ async function displaySalaryChart(stations, times, transfers) {
           tooltip: {
             callbacks: {
               label: function(context) {
-                return `分給換算値: ${Math.round(context.parsed.y).toLocaleString()}円`;
+                return `給料換算: ${Math.round(context.parsed.y).toLocaleString()}円`;
               }
             }
           }
@@ -138,7 +138,7 @@ async function displaySalaryChart(stations, times, transfers) {
           y: {
             title: {
               display: true,
-              text: '分給換算値（円）'
+              text: '給料換算（円）'
             },
             beginAtZero: true,
             ticks: {
