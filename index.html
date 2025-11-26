@@ -389,6 +389,19 @@
       padding: 40px;
       font-size: 1.1rem;
     }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .property-list-container {
+      transition: opacity 0.3s ease-in;
+    }
     .suumo-iframe-wrapper {
       width: 100%;
       margin-top: 20px;
@@ -2117,14 +2130,21 @@
                   successDiv.textContent = `✓ ${mansionName} を登録しました`;
                 }
                 
-                // 入力フィールドをクリア（オプション）
-                // document.getElementById('mansion-name-input').value = '';
-                // document.getElementById('address-input').value = '';
-                // document.getElementById('layout-input').value = '';
-                // document.getElementById('area-input').value = '';
+                // 入力フィールドをクリア
+                document.getElementById('mansion-name-input').value = '';
+                document.getElementById('address-input').value = '';
+                document.getElementById('layout-input').value = '';
+                document.getElementById('area-input').value = '';
                 
-                // 物件一覧を更新（後で実装）
-                // await loadPropertyList();
+                // 物件一覧を即座に更新（リアルタイム反映）
+                await loadPropertyList();
+                
+                // 成功メッセージを3秒後に非表示
+                setTimeout(() => {
+                  if (successDiv) {
+                    successDiv.style.display = 'none';
+                  }
+                }, 3000);
               } else {
                 // エラー
                 if (errorDiv) {
@@ -2232,13 +2252,21 @@
                   </div>
                 `;
               }).join('');
+              
+              container.innerHTML = propertiesHTML;
+              
+              // フェードインアニメーション
+              container.style.opacity = '1';
+              container.style.transition = 'opacity 0.3s ease-in';
             }
           } else {
             container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
+            container.style.opacity = '1';
           }
         } catch (error) {
           console.error('物件一覧取得エラー:', error);
           container.innerHTML = '<div class="property-item-empty">サーバーへの接続に失敗しました</div>';
+          container.style.opacity = '1';
         }
       }
       
@@ -2275,23 +2303,6 @@
       
       // ページ読み込み時に物件一覧を表示
       loadPropertyList();
-      
-      // 登録成功時に一覧を再読み込み（登録成功メッセージ表示後に）
-      const originalSetupRegisterPropertyButton = setupRegisterPropertyButton;
-      setupRegisterPropertyButton = function() {
-        originalSetupRegisterPropertyButton();
-        const registerButton = document.getElementById('register-property-button');
-        if (registerButton) {
-          const originalClickHandler = registerButton.onclick;
-          registerButton.addEventListener('click', async function(e) {
-            await originalClickHandler(e);
-            // 登録成功後、少し待ってから一覧を更新
-            setTimeout(() => {
-              loadPropertyList();
-            }, 500);
-          });
-        }
-      };
     })();
   </script>
 </body>
