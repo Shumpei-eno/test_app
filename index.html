@@ -318,7 +318,7 @@
       color: #5fb3d3;
       font-weight: 600;
       text-align: center;
-      margin-top: 30px;
+      margin-top: 100px;
       margin-bottom: 20px;
       padding: 16px;
       background: rgba(42, 45, 62, 0.6);
@@ -2345,6 +2345,9 @@
               
               if (response.ok && !data.error) {
                 // 登録成功
+                // ポップアップを表示
+                alert(`${mansionName}を登録しました。`);
+                
                 if (successDiv) {
                   successDiv.style.display = 'block';
                   successDiv.textContent = `✓ ${mansionName} を登録しました`;
