@@ -2419,12 +2419,9 @@
               }
             }
             
-            // マンション名は必須
-            if (!mansionName) {
-              if (errorDiv) {
-                errorDiv.textContent = 'マンション名を入力してください。';
-                errorDiv.style.display = 'block';
-              }
+            // マンション名から築年数まで全て必須チェック
+            if (!mansionName || !address || !layout || !area || !floor || !buildingAge) {
+              alert('情報を全て入力してください');
               return;
             }
             
