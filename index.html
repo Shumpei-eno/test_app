@@ -1340,12 +1340,8 @@
               <input type="text" id="monthly-income" placeholder="例: 500000">
               <div class="monthly-income-error" id="monthly-income-error"></div>
             </div>
-            <div style="position: relative; display: inline-block;">
-              <button type="button" id="setting-button" class="setting-button">設定</button>
-              <span class="setting-arrow"></span>
-            </div>
             <div style="display: flex; flex-direction: column;">
-              <div class="minute-salary-display active" id="minute-salary-display">あなたの分給：</div>
+              <div class="minute-salary-display" id="minute-salary-display">あなたの分給：</div>
               <div class="minute-salary-note">月の出勤日数：20日　日の労働時間：7時間45分　と仮定</div>
             </div>
           </div>
@@ -1409,6 +1405,9 @@
             <div class="real-rent-table-container" id="real-rent-table-container"></div>
           </div>
           <div class="property-search-text">２　物件を探す</div>
+          <div class="suumo-note" style="font-size: 0.85rem; color: #888; margin-top: 8px; margin-bottom: 16px; line-height: 1.6;">
+            ＊suumoは埋め込みサイトのため、ブラウザのセキュリティ制約によりブラウザの後進ができません。お手数ですが「建物検索」後は右欄に表示される「検索条件変更」から適宜条件を変更し再検索をかけてください。
+          </div>
           <div class="suumo-iframe-wrapper">
             <div class="iframe-fixed-box">
               <div class="fixed-box-input-group">
@@ -2054,71 +2053,97 @@
       });
     }
 
-    // 設定ボタンのイベントリスナー
-    const settingButton = document.getElementById('setting-button');
-    if (settingButton && monthlyIncomeInput) {
-      settingButton.addEventListener('click', async function() {
-        // バリデーションを実行
-        if (!validateMonthlyIncome(monthlyIncomeInput, monthlyIncomeError)) {
-          return; // バリデーションエラーの場合は送信しない
+    // 月収入力時に自動的に分給を算出・表示する関数
+    async function calculateAndDisplayMinuteSalary(monthlyIncome) {
+      if (!monthlyIncome || monthlyIncome.trim() === '') {
+        const minuteSalaryDisplay = document.getElementById('minute-salary-display');
+        if (minuteSalaryDisplay) {
+          minuteSalaryDisplay.textContent = 'あなたの分給：';
+          minuteSalaryDisplay.classList.remove('active');
         }
+        return;
+      }
 
-        const monthlyIncome = monthlyIncomeInput.value.trim();
-        if (!monthlyIncome) {
-          monthlyIncomeError.textContent = '月収を入力してください';
-          monthlyIncomeError.classList.add('active');
+      // バリデーションを実行
+      if (!validateMonthlyIncome(monthlyIncomeInput, monthlyIncomeError)) {
+        return; // バリデーションエラーの場合は処理しない
+      }
+
+      try {
+        const response = await fetch('/set-salary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ monthly_income: monthlyIncome }),
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          console.error('エラー:', data.error);
+          const minuteSalaryDisplay = document.getElementById('minute-salary-display');
+          if (minuteSalaryDisplay) {
+            minuteSalaryDisplay.textContent = 'あなたの分給：';
+            minuteSalaryDisplay.classList.remove('active');
+          }
           return;
         }
 
-        try {
-          const response = await fetch('/set-salary', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ monthly_income: monthlyIncome }),
-          });
-
-          const data = await response.json();
+        console.log('月収が設定されました:', data);
+        
+        // 分給を表示
+        const minuteSalaryDisplay = document.getElementById('minute-salary-display');
+        if (minuteSalaryDisplay && data.average_minute_salary !== undefined) {
+          const averageMinuteSalary = parseFloat(data.average_minute_salary);
+          minuteSalaryDisplay.textContent = `あなたの分給：${averageMinuteSalary.toFixed(2)}円`;
+          minuteSalaryDisplay.classList.add('active');
           
-          if (!response.ok) {
-            console.error('エラー:', data.error);
-            alert(data.error || '月収の設定に失敗しました。');
-            return;
-          }
-
-          console.log('月収が設定されました:', data);
+          // 分給を保存（change_commute_salary.jsの関数を使用）
+          setMinuteSalary(averageMinuteSalary);
           
-          // 分給を表示
-          const minuteSalaryDisplay = document.getElementById('minute-salary-display');
-          if (minuteSalaryDisplay && data.average_minute_salary !== undefined) {
-            const averageMinuteSalary = parseFloat(data.average_minute_salary);
-            minuteSalaryDisplay.textContent = `あなたの分給：${averageMinuteSalary.toFixed(2)}円`;
-            minuteSalaryDisplay.classList.add('active');
-            
-            // 分給を保存（change_commute_salary.jsの関数を使用）
-            setMinuteSalary(averageMinuteSalary);
-            
-            // 分給換算チャートと実質家賃チャートを更新
-            const railway = railwaySelect.value;
-            const line = lineSelect.value;
-            if (railway && line) {
-              const fixData = await loadFixData();
-              if (fixData) {
-                const extracted = extractData(fixData, railway, line);
-                if (extracted.stations.length > 0) {
-                  await displaySalaryChart(extracted.stations, extracted.times, extracted.transfers);
-                  displayCommuteSalaryTable(extracted.stations, extracted.times, extracted.transfers, averageMinuteSalary);
-                  await displayRealRentChart(extracted.stations, extracted.rents, extracted.times, extracted.transfers);
-                  displayRealRentTable(extracted.stations, extracted.rents, extracted.times, extracted.transfers, averageMinuteSalary);
-                }
+          // 分給換算チャートと実質家賃チャートを更新
+          const railway = railwaySelect.value;
+          const line = lineSelect.value;
+          if (railway && line) {
+            const fixData = await loadFixData();
+            if (fixData) {
+              const extracted = extractData(fixData, railway, line);
+              if (extracted.stations.length > 0) {
+                await displaySalaryChart(extracted.stations, extracted.times, extracted.transfers);
+                displayCommuteSalaryTable(extracted.stations, extracted.times, extracted.transfers, averageMinuteSalary);
+                await displayRealRentChart(extracted.stations, extracted.rents, extracted.times, extracted.transfers);
+                displayRealRentTable(extracted.stations, extracted.rents, extracted.times, extracted.transfers, averageMinuteSalary);
               }
             }
           }
-        } catch (error) {
-          console.error('リクエストエラー:', error);
-          alert('サーバーへの接続に失敗しました。');
         }
+      } catch (error) {
+        console.error('リクエストエラー:', error);
+        const minuteSalaryDisplay = document.getElementById('minute-salary-display');
+        if (minuteSalaryDisplay) {
+          minuteSalaryDisplay.textContent = 'あなたの分給：';
+          minuteSalaryDisplay.classList.remove('active');
+        }
+      }
+    }
+
+    // 月収入力フィールドに自動計算のイベントリスナーを追加
+    if (monthlyIncomeInput) {
+      let debounceTimer;
+      monthlyIncomeInput.addEventListener('input', function() {
+        // デバウンス処理（入力が止まってから500ms後に実行）
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const monthlyIncome = monthlyIncomeInput.value.trim();
+          calculateAndDisplayMinuteSalary(monthlyIncome);
+        }, 500);
+      });
+      
+      // フォーカスが外れた時にも計算
+      monthlyIncomeInput.addEventListener('blur', function() {
+        const monthlyIncome = monthlyIncomeInput.value.trim();
+        calculateAndDisplayMinuteSalary(monthlyIncome);
       });
     }
 
@@ -2456,11 +2481,6 @@
                 // ポップアップを表示
                 alert(`${mansionName}を登録しました。`);
                 
-                if (successDiv) {
-                  successDiv.style.display = 'block';
-                  successDiv.textContent = `✓ ${mansionName} を登録しました`;
-                }
-                
                 // 入力フィールドをクリア
                 document.getElementById('mansion-name-input').value = '';
                 document.getElementById('address-input').value = '';
@@ -2471,13 +2491,6 @@
                 
                 // 物件一覧を即座に更新（リアルタイム反映）
                 await loadPropertyList();
-                
-                // 成功メッセージを3秒後に非表示
-                setTimeout(() => {
-                  if (successDiv) {
-                    successDiv.style.display = 'none';
-                  }
-                }, 3000);
               } else {
                 // エラー
                 if (errorDiv) {
