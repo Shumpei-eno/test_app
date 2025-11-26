@@ -242,19 +242,23 @@ def get_properties_by_user_id(user_id: int) -> list:
         return [{"error": f"物件一覧の取得に失敗しました: {str(e)}"}]
 
 
-def delete_property(property_id: int, user_id: int) -> dict:
-    """物件を削除（所有者のみ削除可能）"""
+def delete_property(user_id: int, mansion_name: str) -> dict:
+    """物件を削除（user_idとmansion_nameの両方が一致するデータを削除）"""
     try:
         with get_db_cursor() as cursor:
             cursor.execute("""
                 DELETE FROM properties
-                WHERE id = %s AND user_id = %s
-                RETURNING id
-            """, (property_id, user_id))
+                WHERE user_id = %s AND mansion_name = %s
+                RETURNING id, mansion_name
+            """, (user_id, mansion_name))
             result = cursor.fetchone()
             
             if result:
-                return {"message": "物件を削除しました", "id": result["id"]}
+                return {
+                    "message": "物件を削除しました",
+                    "id": result["id"],
+                    "mansion_name": result["mansion_name"]
+                }
             else:
                 return {"error": "物件が見つからないか、削除権限がありません"}
     except Exception as e:

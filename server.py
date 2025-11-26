@@ -359,20 +359,24 @@ def get_properties_endpoint(user_id):
         return jsonify({"error": "サーバー内部エラーが発生しました。", "detail": str(exc)}), 500
 
 
-@app.route("/api/properties/<int:property_id>", methods=["DELETE", "OPTIONS"])
-def delete_property_endpoint(property_id):
-    """物件を削除するAPIエンドポイント"""
+@app.route("/api/properties", methods=["DELETE", "OPTIONS"])
+def delete_property_endpoint():
+    """物件を削除するAPIエンドポイント（user_idとmansion_nameで削除）"""
     if request.method == "OPTIONS":
         return ("", 204)
     
     payload = request.get_json(silent=True) or {}
     user_id = payload.get("user_id")
+    mansion_name = payload.get("mansion_name")
     
     if not user_id:
         return jsonify({"error": "ユーザーIDが必要です"}), 400
     
+    if not mansion_name:
+        return jsonify({"error": "マンション名が必要です"}), 400
+    
     try:
-        result = delete_property(property_id, user_id)
+        result = delete_property(user_id, mansion_name)
         if "error" in result:
             return jsonify(result), 400
         return jsonify(result), 200

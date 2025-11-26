@@ -2204,7 +2204,7 @@
                       <div>
                         <div class="property-item-name">${property.mansion_name || '（マンション名未入力）'}</div>
                       </div>
-                      <button class="property-item-delete" onclick="deleteProperty(${property.id}, ${property.user_id})">削除</button>
+                      <button class="property-item-delete" onclick="deleteProperty(${property.user_id}, ${JSON.stringify(property.mansion_name || '')})">削除</button>
                     </div>
                     <div class="property-item-details">
                       ${property.address ? `
@@ -2271,33 +2271,76 @@
         }
       }
       
-      // 物件を削除する関数
-      async function deleteProperty(propertyId, userId) {
-        if (!confirm('この物件を削除しますか？')) {
+      // 物件を削除する関数（user_idとmansion_nameで削除）
+      async function deleteProperty(userId, mansionName) {
+        if (!confirm(`「${mansionName}」を削除しますか？`)) {
           return;
         }
         
+        // 削除対象の物件要素を取得
+        const container = document.getElementById('property-list-container');
+        const propertyItems = container.querySelectorAll('.property-item');
+        let targetItem = null;
+        
+        // マンション名が一致する物件要素を探す
+        for (const item of propertyItems) {
+          const itemName = item.querySelector('.property-item-name')?.textContent.trim();
+          if (itemName === mansionName) {
+            targetItem = item;
+            break;
+          }
+        }
+        
+        // 削除アニメーション（フェードアウト）
+        if (targetItem) {
+          targetItem.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+          targetItem.style.opacity = '0';
+          targetItem.style.transform = 'translateX(-20px)';
+        }
+        
         try {
-          const response = await fetch(`/api/properties/${propertyId}`, {
+          const response = await fetch('/api/properties', {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              user_id: userId
+              user_id: parseInt(userId),
+              mansion_name: mansionName
             })
           });
           
           const data = await response.json();
           
           if (response.ok && !data.error) {
-            // 削除成功、一覧を再読み込み
-            await loadPropertyList();
+            // 削除成功、アニメーション完了後にDOMから削除
+            setTimeout(() => {
+              if (targetItem && targetItem.parentNode) {
+                targetItem.parentNode.removeChild(targetItem);
+              }
+              
+              // 物件がなくなった場合のメッセージ表示
+              const remainingItems = container.querySelectorAll('.property-item');
+              if (remainingItems.length === 0) {
+                container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
+                container.style.opacity = '1';
+              }
+            }, 300);
           } else {
+            // 削除失敗、アニメーションを元に戻す
+            if (targetItem) {
+              targetItem.style.opacity = '1';
+              targetItem.style.transform = 'translateX(0)';
+            }
             alert(data.error || '削除に失敗しました');
           }
         } catch (error) {
           console.error('物件削除エラー:', error);
+          // エラー時もアニメーションを元に戻す
+          if (targetItem) {
+            targetItem.style.opacity = '1';
+            targetItem.style.transform = 'translateX(0)';
+          }
           alert('サーバーへの接続に失敗しました');
         }
       }
