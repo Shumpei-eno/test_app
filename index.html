@@ -2668,33 +2668,7 @@
         propertyMap = new google.maps.Map(mapContainer, {
           zoom: 12,
           center: defaultCenter,
-          styles: [
-            {
-              featureType: "all",
-              elementType: "geometry",
-              stylers: [{ color: "#242f3e" }]
-            },
-            {
-              featureType: "all",
-              elementType: "labels.text.stroke",
-              stylers: [{ color: "#242f3e" }]
-            },
-            {
-              featureType: "all",
-              elementType: "labels.text.fill",
-              stylers: [{ color: "#746855" }]
-            },
-            {
-              featureType: "water",
-              elementType: "geometry",
-              stylers: [{ color: "#17263c" }]
-            },
-            {
-              featureType: "road",
-              elementType: "geometry",
-              stylers: [{ color: "#38414e" }]
-            }
-          ]
+          styles: [] // 白ベースのデフォルトスタイルを使用
         });
       }
       
@@ -2762,15 +2736,31 @@
                 }
               });
               
-              // インフォウィンドウを作成
+              // インフォウィンドウを作成（カスタムHTMLで×ボタンを追加）
+              const infoWindowContent = document.createElement('div');
+              infoWindowContent.style.cssText = 'position: relative; padding: 12px; min-width: 200px;';
+              
+              // ×ボタン
+              const closeButton = document.createElement('div');
+              closeButton.innerHTML = '×';
+              closeButton.style.cssText = 'position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background: #ff6b6b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; font-weight: bold; line-height: 1; z-index: 10;';
+              closeButton.addEventListener('click', () => {
+                infoWindow.close();
+              });
+              
+              // コンテンツ
+              const content = document.createElement('div');
+              content.style.cssText = 'padding-top: 8px;';
+              content.innerHTML = `
+                <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #5fb3d3; font-weight: 600;">${property.mansion_name || '（マンション名未入力）'}</h3>
+                <p style="margin: 0; font-size: 0.9rem; color: #1a1d2e;">${property.address}</p>
+              `;
+              
+              infoWindowContent.appendChild(closeButton);
+              infoWindowContent.appendChild(content);
+              
               const infoWindow = new google.maps.InfoWindow({
-                content: `
-                  <div style="color: #1a1d2e; padding: 8px;">
-                    <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #5fb3d3;">${property.mansion_name || '（マンション名未入力）'}</h3>
-                    <p style="margin: 0; font-size: 0.9rem;">${property.address}</p>
-                    ${property.real_rent ? `<p style="margin: 8px 0 0 0; font-size: 0.9rem; font-weight: 600; color: #5fb3d3;">実質家賃: ${Math.round(property.real_rent).toLocaleString()}円</p>` : ''}
-                  </div>
-                `
+                content: infoWindowContent
               });
               
               // マーカークリック時にインフォウィンドウを表示
