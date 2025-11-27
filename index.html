@@ -462,7 +462,7 @@
     }
     .property-map-container {
       width: 100%;
-      height: 300px;
+      height: 450px;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid rgba(95, 179, 211, 0.2);
@@ -2723,31 +2723,23 @@
                 // iconを指定しないことでデフォルトのピンアイコンを使用
               });
               
-              // インフォウィンドウを作成（カスタムHTMLで×ボタンを追加）
+              // インフォウィンドウを作成（中央配置、スクロールなし、×ボタンなし）
               const infoWindowContent = document.createElement('div');
-              infoWindowContent.style.cssText = 'position: relative; padding: 12px; min-width: 200px;';
+              infoWindowContent.style.cssText = 'padding: 8px 12px; min-width: 180px; max-width: 250px; text-align: center; overflow: hidden;';
               
-              // ×ボタン
-              const closeButton = document.createElement('div');
-              closeButton.innerHTML = '×';
-              closeButton.style.cssText = 'position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; background: #ff6b6b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; font-weight: bold; line-height: 1; z-index: 10;';
-              closeButton.addEventListener('click', () => {
-                infoWindow.close();
-              });
-              
-              // コンテンツ
+              // コンテンツ（中央配置）
               const content = document.createElement('div');
-              content.style.cssText = 'padding-top: 8px;';
+              content.style.cssText = 'display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;';
               content.innerHTML = `
-                <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #5fb3d3; font-weight: 600;">${property.mansion_name || '（マンション名未入力）'}</h3>
-                <p style="margin: 0; font-size: 0.9rem; color: #1a1d2e;">${property.address}</p>
+                <h3 style="margin: 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600; text-align: center;">${property.mansion_name || '（マンション名未入力）'}</h3>
+                <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e; text-align: center; word-break: break-word;">${property.address}</p>
               `;
               
-              infoWindowContent.appendChild(closeButton);
               infoWindowContent.appendChild(content);
               
               const infoWindow = new google.maps.InfoWindow({
-                content: infoWindowContent
+                content: infoWindowContent,
+                maxWidth: 250
               });
               
               // マーカーにマウスオーバー時にインフォウィンドウを表示
