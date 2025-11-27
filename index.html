@@ -1257,6 +1257,7 @@
     }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5GrwhV-uXJ7A16evAAcJUPXAV48bJSaI&callback=initMap" async defer></script>
   <script src="chart_code.js"></script>
   <script src="alert.js"></script>
   <script src="change_commute_salary.js"></script>
@@ -1510,13 +1511,7 @@
             </div>
             <div class="property-map-wrapper">
               <div class="property-map-title">物件位置マップ</div>
-              <div class="property-map-container">
-                <iframe
-                  id="property-map"
-                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB5GrwhV-uXJ7A16evAAcJUPXAV48bJSaI&q=Tokyo,Japan"
-                  allowfullscreen>
-                </iframe>
-              </div>
+              <div class="property-map-container" id="property-map"></div>
             </div>
           </div>
         </div>
@@ -2656,6 +2651,156 @@
       // 物件チャートの変数
       let propertyChart = null;
       
+      // Google Mapsの変数
+      let propertyMap = null;
+      let propertyMarkers = [];
+      
+      // Google Mapsを初期化する関数
+      function initPropertyMap() {
+        const mapContainer = document.getElementById('property-map');
+        if (!mapContainer) {
+          return;
+        }
+        
+        // 東京をデフォルトの中心地として設定
+        const defaultCenter = { lat: 35.6762, lng: 139.6503 };
+        
+        propertyMap = new google.maps.Map(mapContainer, {
+          zoom: 12,
+          center: defaultCenter,
+          styles: [
+            {
+              featureType: "all",
+              elementType: "geometry",
+              stylers: [{ color: "#242f3e" }]
+            },
+            {
+              featureType: "all",
+              elementType: "labels.text.stroke",
+              stylers: [{ color: "#242f3e" }]
+            },
+            {
+              featureType: "all",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#746855" }]
+            },
+            {
+              featureType: "water",
+              elementType: "geometry",
+              stylers: [{ color: "#17263c" }]
+            },
+            {
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [{ color: "#38414e" }]
+            }
+          ]
+        });
+      }
+      
+      // グローバル関数として定義（Google Maps APIのコールバック用）
+      window.initMap = function() {
+        initPropertyMap();
+      };
+      
+      // 物件マップを更新する関数
+      function updatePropertyMap(properties) {
+        if (!propertyMap) {
+          // マップが初期化されていない場合、初期化を試みる
+          if (typeof google !== 'undefined' && google.maps) {
+            initPropertyMap();
+          } else {
+            // Google Maps APIがまだ読み込まれていない場合、少し待ってから再試行
+            setTimeout(() => updatePropertyMap(properties), 500);
+            return;
+          }
+        }
+        
+        // 既存のマーカーを削除
+        propertyMarkers.forEach(marker => marker.setMap(null));
+        propertyMarkers = [];
+        
+        // 住所がある物件をフィルタリング
+        const propertiesWithAddress = properties.filter(p => p.address && p.address.trim() !== '');
+        
+        if (propertiesWithAddress.length === 0) {
+          // 物件がない場合は東京を中心に表示
+          propertyMap.setCenter({ lat: 35.6762, lng: 139.6503 });
+          propertyMap.setZoom(12);
+          return;
+        }
+        
+        // Geocoderを使用して住所を座標に変換
+        const geocoder = new google.maps.Geocoder();
+        let geocodedCount = 0;
+        const bounds = new google.maps.LatLngBounds();
+        
+        propertiesWithAddress.forEach((property, index) => {
+          geocoder.geocode({ address: property.address }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const location = results[0].geometry.location;
+              const position = { lat: location.lat(), lng: location.lng() };
+              
+              // マーカーを作成
+              const marker = new google.maps.Marker({
+                position: position,
+                map: propertyMap,
+                title: property.mansion_name || '物件',
+                label: {
+                  text: (index + 1).toString(),
+                  color: '#ffffff',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                },
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: '#5fb3d3',
+                  fillOpacity: 1,
+                  strokeColor: '#ffffff',
+                  strokeWeight: 2
+                }
+              });
+              
+              // インフォウィンドウを作成
+              const infoWindow = new google.maps.InfoWindow({
+                content: `
+                  <div style="color: #1a1d2e; padding: 8px;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #5fb3d3;">${property.mansion_name || '（マンション名未入力）'}</h3>
+                    <p style="margin: 0; font-size: 0.9rem;">${property.address}</p>
+                    ${property.real_rent ? `<p style="margin: 8px 0 0 0; font-size: 0.9rem; font-weight: 600; color: #5fb3d3;">実質家賃: ${Math.round(property.real_rent).toLocaleString()}円</p>` : ''}
+                  </div>
+                `
+              });
+              
+              // マーカークリック時にインフォウィンドウを表示
+              marker.addListener('click', () => {
+                infoWindow.open(propertyMap, marker);
+              });
+              
+              propertyMarkers.push(marker);
+              bounds.extend(position);
+              
+              geocodedCount++;
+              
+              // 全ての住所を変換し終えたら、マップの表示範囲を調整
+              if (geocodedCount === propertiesWithAddress.length) {
+                propertyMap.fitBounds(bounds);
+                // ズームレベルが大きすぎる場合は制限
+                google.maps.event.addListenerOnce(propertyMap, 'bounds_changed', () => {
+                  if (propertyMap.getZoom() > 15) {
+                    propertyMap.setZoom(15);
+                  }
+                });
+              }
+            } else {
+              console.warn(`住所の変換に失敗しました: ${property.address}`, status);
+              geocodedCount++;
+            }
+          });
+        });
+      }
+      
       // 物件チャートを更新する関数
       function updatePropertyChart(properties) {
         try {
@@ -2804,7 +2949,7 @@
             if (validProperties.length === 0) {
               container.innerHTML = '<div class="property-item-empty">登録されている物件はありません</div>';
               container.style.opacity = '1';
-              // チャートを非表示
+              // チャートとマップを非表示
               const chartContainer = document.getElementById('property-chart-container');
               if (chartContainer) {
                 chartContainer.style.display = 'none';
@@ -2813,6 +2958,9 @@
                 propertyChart.destroy();
                 propertyChart = null;
               }
+              // マーカーをクリア
+              propertyMarkers.forEach(marker => marker.setMap(null));
+              propertyMarkers = [];
             } else {
               // 物件一覧を生成（フェードインアニメーション付き）
               const propertiesHTML = validProperties.map((property, index) => {
@@ -2910,6 +3058,9 @@
               
               // チャートを更新
               updatePropertyChart(validProperties);
+              
+              // マップを更新
+              updatePropertyMap(validProperties);
             }
           } else {
             container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
