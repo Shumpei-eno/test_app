@@ -2715,25 +2715,12 @@
               const location = results[0].geometry.location;
               const position = { lat: location.lat(), lng: location.lng() };
               
-              // マーカーを作成
+              // マーカーを作成（デフォルトのGoogleピンアイコンを使用）
               const marker = new google.maps.Marker({
                 position: position,
                 map: propertyMap,
-                title: property.mansion_name || '物件',
-                label: {
-                  text: (index + 1).toString(),
-                  color: '#ffffff',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                },
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 10,
-                  fillColor: '#5fb3d3',
-                  fillOpacity: 1,
-                  strokeColor: '#ffffff',
-                  strokeWeight: 2
-                }
+                title: property.mansion_name || '物件'
+                // iconを指定しないことでデフォルトのピンアイコンを使用
               });
               
               // インフォウィンドウを作成（カスタムHTMLで×ボタンを追加）
@@ -2763,9 +2750,14 @@
                 content: infoWindowContent
               });
               
-              // マーカークリック時にインフォウィンドウを表示
-              marker.addListener('click', () => {
+              // マーカーにマウスオーバー時にインフォウィンドウを表示
+              marker.addListener('mouseover', () => {
                 infoWindow.open(propertyMap, marker);
+              });
+              
+              // マーカーからマウスアウト時にインフォウィンドウを閉じる
+              marker.addListener('mouseout', () => {
+                infoWindow.close();
               });
               
               propertyMarkers.push(marker);
