@@ -425,6 +425,14 @@
       border-radius: 16px;
       border: 1px solid rgba(95, 179, 211, 0.2);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .property-chart-wrapper {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
     }
     .property-chart-title {
       font-size: 1.5rem;
@@ -436,7 +444,33 @@
       border-bottom: 2px solid rgba(95, 179, 211, 0.3);
     }
     .property-chart-container canvas {
-      max-height: 400px;
+      max-height: 300px;
+    }
+    .property-map-wrapper {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+    }
+    .property-map-title {
+      font-size: 1.5rem;
+      color: #5fb3d3;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(95, 179, 211, 0.3);
+    }
+    .property-map-container {
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(95, 179, 211, 0.2);
+    }
+    .property-map-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
     .suumo-iframe-wrapper {
       width: 100%;
@@ -1469,9 +1503,21 @@
             <div class="property-item-loading">読み込み中...</div>
           </div>
           <div class="property-chart-container" id="property-chart-container" style="display: none;">
-            <div style="font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 12px;">物件比較方法は検討中…</div>
-            <div class="property-chart-title">実質家賃比較チャート</div>
-            <canvas id="propertyChart"></canvas>
+            <div class="property-chart-wrapper">
+              <div style="font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 12px;">物件比較方法は検討中…</div>
+              <div class="property-chart-title">実質家賃比較チャート</div>
+              <canvas id="propertyChart"></canvas>
+            </div>
+            <div class="property-map-wrapper">
+              <div class="property-map-title">物件位置マップ</div>
+              <div class="property-map-container">
+                <iframe
+                  id="property-map"
+                  src="https://www.google.com/maps/embed/v1/place?key=AIzaSyB5GrwhV-uXJ7A16evAAcJUPXAV48bJSaI&q=Tokyo,Japan"
+                  allowfullscreen>
+                </iframe>
+              </div>
+            </div>
           </div>
         </div>
       </div>
