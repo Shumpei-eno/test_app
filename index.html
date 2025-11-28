@@ -1459,7 +1459,7 @@
                 <div class="fixed-box-note">＊徒歩での所要時間を想定</div>
                 <div class="fixed-box-error" id="time-input-error"></div>
               </div>
-              <button type="button" class="search-button" id="search-button">検索</button>
+              <button type="button" class="search-button" id="search-button">算出</button>
               <div class="fixed-box-title">実質家賃の算出</div>
               <div class="fixed-box-result-value" id="real-rent-result">-</div>
               <div style="text-align: center; color: #888; font-size: 0.9rem; margin-top: 12px; margin-bottom: 12px;">↓検討する場合は登録</div>
@@ -2568,6 +2568,13 @@
             // マンション名から築年数まで全て必須チェック
             if (!mansionName || !address || !layout || !area || !floor || !buildingAge) {
               alert('情報を全て入力してください');
+              return;
+            }
+            
+            // 実質家賃が算出されているかチェック
+            const realRentResultElement = document.getElementById('real-rent-result');
+            if (!realRentResultElement || !realRentText || realRentText === '-' || realRentText.trim() === '') {
+              alert('家賃を算出してください');
               return;
             }
             
