@@ -2719,8 +2719,25 @@
         setTimeout(() => {
           const searchInput = document.getElementById('property-map-search');
           if (searchInput && typeof google !== 'undefined' && google.maps && google.maps.places) {
-            const autocomplete = new google.maps.places.Autocomplete(searchInput);
-            autocomplete.bindTo('bounds', propertyMap);
+            // マップの表示範囲を取得して検索範囲に設定
+            const bounds = propertyMap.getBounds();
+            
+            const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+              bounds: bounds || new google.maps.LatLngBounds(
+                new google.maps.LatLng(35.0, 139.0), // 南西の角
+                new google.maps.LatLng(36.0, 140.0)  // 北東の角
+              ),
+              componentRestrictions: { country: 'jp' }, // 日本国内に制限
+              fields: ['geometry', 'name', 'formatted_address']
+            });
+            
+            // マップの表示範囲が変更されたら、検索範囲も更新
+            propertyMap.addListener('bounds_changed', () => {
+              const newBounds = propertyMap.getBounds();
+              if (newBounds) {
+                autocomplete.setBounds(newBounds);
+              }
+            });
             
             // 検索結果が選択された時の処理
             autocomplete.addListener('place_changed', function() {
@@ -2728,6 +2745,7 @@
               
               if (!place.geometry || !place.geometry.location) {
                 console.warn('選択された場所に位置情報がありません');
+                alert('選択された場所に位置情報がありません');
                 return;
               }
               
