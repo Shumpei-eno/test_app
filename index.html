@@ -2697,6 +2697,7 @@
       // Google Mapsの変数
       let propertyMap = null;
       let propertyMarkers = [];
+      let searchAutocomplete = null;
       
       // Google Mapsを初期化する関数
       function initPropertyMap() {
@@ -2714,70 +2715,124 @@
           styles: [] // 白ベースのデフォルトスタイルを使用
         });
         
-        // 検索ボックスの初期化（Places Autocomplete）
-        // マップが初期化された後に検索ボックスを初期化
-        setTimeout(() => {
-          const searchInput = document.getElementById('property-map-search');
-          if (searchInput && typeof google !== 'undefined' && google.maps && google.maps.places) {
-            // マップの表示範囲を取得して検索範囲に設定
-            const bounds = propertyMap.getBounds();
-            
-            const autocomplete = new google.maps.places.Autocomplete(searchInput, {
-              bounds: bounds || new google.maps.LatLngBounds(
-                new google.maps.LatLng(35.0, 139.0), // 南西の角
-                new google.maps.LatLng(36.0, 140.0)  // 北東の角
-              ),
-              componentRestrictions: { country: 'jp' }, // 日本国内に制限
-              fields: ['geometry', 'name', 'formatted_address']
-            });
-            
-            // マップの表示範囲が変更されたら、検索範囲も更新
-            propertyMap.addListener('bounds_changed', () => {
-              const newBounds = propertyMap.getBounds();
-              if (newBounds) {
-                autocomplete.setBounds(newBounds);
-              }
-            });
-            
-            // 検索結果が選択された時の処理
-            autocomplete.addListener('place_changed', function() {
-              const place = autocomplete.getPlace();
-              
-              if (!place.geometry || !place.geometry.location) {
-                console.warn('選択された場所に位置情報がありません');
-                alert('選択された場所に位置情報がありません');
-                return;
-              }
-              
-              // マップの中心を選択された場所に移動
-              propertyMap.setCenter(place.geometry.location);
-              propertyMap.setZoom(15);
-              
-              // 選択された場所にマーカーを表示（一時的）
-              if (window.searchMarker) {
-                window.searchMarker.setMap(null);
-              }
-              
-              window.searchMarker = new google.maps.Marker({
-                map: propertyMap,
-                position: place.geometry.location,
-                title: place.name || place.formatted_address
-              });
-              
-              // インフォウィンドウを表示
-              const infoWindow = new google.maps.InfoWindow();
-              infoWindow.setContent(`
-                <div style="padding: 8px; text-align: center;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600;">${place.name || '場所'}</h3>
-                  <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e;">${place.formatted_address || ''}</p>
-                </div>
-              `);
-              infoWindow.open(propertyMap, window.searchMarker);
-            });
-          } else {
-            console.warn('検索ボックスまたはPlaces APIが見つかりません');
+        // 検索ボックスの初期化（物件一覧が読み込まれた後に実行される）
+        initSearchBox();
+      }
+      
+      // 検索ボックスを初期化する関数（物件の住所周辺で検索）
+      function initSearchBox() {
+        const searchInput = document.getElementById('property-map-search');
+        if (!searchInput || typeof google === 'undefined' || !google.maps || !google.maps.places) {
+          return;
+        }
+        
+        // デフォルトのbounds（東京周辺）
+        let defaultBounds = new google.maps.LatLngBounds(
+          new google.maps.LatLng(35.0, 139.0),
+          new google.maps.LatLng(36.0, 140.0)
+        );
+        
+        // 既存のAutocompleteがあれば削除
+        if (searchAutocomplete) {
+          google.maps.event.clearInstanceListeners(searchInput);
+        }
+        
+        // 検索ボックスを初期化（初期boundsはデフォルト）
+        searchAutocomplete = new google.maps.places.Autocomplete(searchInput, {
+          bounds: defaultBounds,
+          componentRestrictions: { country: 'jp' },
+          fields: ['geometry', 'name', 'formatted_address']
+        });
+        
+        // 検索結果が選択された時の処理
+        searchAutocomplete.addListener('place_changed', function() {
+          const place = searchAutocomplete.getPlace();
+          
+          if (!place.geometry || !place.geometry.location) {
+            console.warn('選択された場所に位置情報がありません');
+            alert('選択された場所に位置情報がありません');
+            return;
           }
-        }, 100);
+          
+          // マップの中心を選択された場所に移動
+          propertyMap.setCenter(place.geometry.location);
+          propertyMap.setZoom(15);
+          
+          // 選択された場所にマーカーを表示（一時的）
+          if (window.searchMarker) {
+            window.searchMarker.setMap(null);
+          }
+          
+          window.searchMarker = new google.maps.Marker({
+            map: propertyMap,
+            position: place.geometry.location,
+            title: place.name || place.formatted_address
+          });
+          
+          // インフォウィンドウを表示
+          const infoWindow = new google.maps.InfoWindow();
+          infoWindow.setContent(`
+            <div style="padding: 8px; text-align: center;">
+              <h3 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600;">${place.name || '場所'}</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e;">${place.formatted_address || ''}</p>
+            </div>
+          `);
+          infoWindow.open(propertyMap, window.searchMarker);
+        });
+      }
+      
+      // 物件の住所周辺で検索できるようにboundsを更新する関数
+      async function updateSearchBounds(properties) {
+        if (!searchAutocomplete || !propertyMap) {
+          return;
+        }
+        
+        // 住所がある物件をフィルタリング
+        const propertiesWithAddress = properties.filter(p => p.address && p.address.trim() !== '');
+        
+        if (propertiesWithAddress.length === 0) {
+          // 物件がない場合はマップの表示範囲を使用
+          const bounds = propertyMap.getBounds();
+          if (bounds) {
+            searchAutocomplete.setBounds(bounds);
+          }
+          return;
+        }
+        
+        // Geocoderを使用して住所を座標に変換
+        const geocoder = new google.maps.Geocoder();
+        const bounds = new google.maps.LatLngBounds();
+        let geocodedCount = 0;
+        
+        propertiesWithAddress.forEach((property) => {
+          geocoder.geocode({ address: property.address }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const location = results[0].geometry.location;
+              bounds.extend(new google.maps.LatLng(location.lat(), location.lng()));
+            }
+            
+            geocodedCount++;
+            
+            // 全ての住所を変換し終えたら、検索範囲を更新
+            if (geocodedCount === propertiesWithAddress.length) {
+              // boundsが有効な場合のみ更新
+              if (!bounds.isEmpty()) {
+                // 少し余裕を持たせてboundsを拡張
+                const sw = bounds.getSouthWest();
+                const ne = bounds.getNorthEast();
+                const latDiff = (ne.lat() - sw.lat()) * 0.1;
+                const lngDiff = (ne.lng() - sw.lng()) * 0.1;
+                
+                const expandedBounds = new google.maps.LatLngBounds(
+                  new google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff),
+                  new google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff)
+                );
+                
+                searchAutocomplete.setBounds(expandedBounds);
+              }
+            }
+          });
+        });
       }
       
       // グローバル関数として定義（Google Maps APIのコールバック用）
@@ -3143,6 +3198,9 @@
               
               // マップを更新
               updatePropertyMap(validProperties);
+              
+              // 検索範囲を物件の住所周辺に更新
+              updateSearchBounds(validProperties);
             }
           } else {
             container.innerHTML = `<div class="property-item-empty">エラー: ${data.error || 'データの取得に失敗しました'}</div>`;
