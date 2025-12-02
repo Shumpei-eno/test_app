@@ -2783,7 +2783,26 @@
       
       // 最新の物件の住所周辺で検索できるようにboundsを更新する関数
       async function updateSearchBounds(properties) {
-        if (!searchAutocomplete || !propertyMap || typeof google === 'undefined' || !google.maps) {
+        // Google Maps APIが読み込まれていない場合は待機
+        if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+          console.warn('Google Maps APIがまだ読み込まれていません。500ms後に再試行します。');
+          setTimeout(() => updateSearchBounds(properties), 500);
+          return;
+        }
+        
+        // propertyMapが初期化されていない場合は待機
+        if (!propertyMap) {
+          console.warn('propertyMapがまだ初期化されていません。500ms後に再試行します。');
+          setTimeout(() => updateSearchBounds(properties), 500);
+          return;
+        }
+        
+        // searchAutocompleteが初期化されていない場合は初期化
+        if (!searchAutocomplete) {
+          console.log('searchAutocompleteが初期化されていないため、初期化します。');
+          initSearchBox();
+          // 初期化後、少し待ってから再試行
+          setTimeout(() => updateSearchBounds(properties), 300);
           return;
         }
         
@@ -2793,8 +2812,9 @@
         if (propertiesWithAddress.length === 0) {
           // 物件がない場合はマップの表示範囲を使用
           const bounds = propertyMap.getBounds();
-          if (bounds) {
+          if (bounds && searchAutocomplete) {
             searchAutocomplete.setBounds(bounds);
+            console.log('検索範囲をマップの表示範囲に設定しました');
           }
           return;
         }
@@ -2804,8 +2824,11 @@
         const latestAddress = latestProperty.address;
         
         if (!latestAddress) {
+          console.warn('最新の物件に住所が設定されていません');
           return;
         }
+        
+        console.log('最新の物件の住所を検索範囲の中心として設定します:', latestAddress);
         
         // Geocoderを使用して最新の物件の住所を座標に変換
         const geocoder = new google.maps.Geocoder();
@@ -2824,9 +2847,12 @@
               new google.maps.LatLng(centerLat + searchRadius, centerLng + searchRadius)
             );
             
-            searchAutocomplete.setBounds(searchBounds);
-            
-            console.log('検索範囲を更新しました:', latestAddress, '中心:', centerLat, centerLng);
+            if (searchAutocomplete) {
+              searchAutocomplete.setBounds(searchBounds);
+              console.log('検索範囲を更新しました:', latestAddress, '中心:', centerLat, centerLng);
+            } else {
+              console.error('searchAutocompleteが存在しません');
+            }
           } else {
             console.warn('最新の物件の住所を座標に変換できませんでした:', latestAddress, status);
           }
