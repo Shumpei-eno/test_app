@@ -2697,7 +2697,12 @@
       // Google Mapsの変数
       let propertyMap = null;
       let propertyMarkers = [];
+      let geocoder = null;
       let searchAutocomplete = null;
+      let autocompleteService = null;
+      let searchCenterLocation = null; // 検索の中心位置（最新の物件の住所）
+      let searchRadiusMeters = 2000; // 検索半径（メートル）
+      let searchSuggestionsContainer = null; // 検索候補を表示するコンテナ
       
       // Google Mapsを初期化する関数
       function initPropertyMap() {
@@ -2719,66 +2724,191 @@
         initSearchBox();
       }
       
-      // 検索ボックスを初期化する関数（最新の物件の住所周辺で検索）
+      // 検索ボックスを初期化する関数（AutocompleteServiceを使用したカスタム検索）
       function initSearchBox() {
         const searchInput = document.getElementById('property-map-search');
         if (!searchInput || typeof google === 'undefined' || !google.maps || !google.maps.places) {
           return;
         }
         
-        // 既存のAutocompleteがあれば削除
-        if (searchAutocomplete) {
-          google.maps.event.clearInstanceListeners(searchInput);
+        // AutocompleteServiceを初期化
+        if (!autocompleteService) {
+          autocompleteService = new google.maps.places.AutocompleteService();
         }
         
-        // デフォルトのbounds（東京周辺）
-        let defaultBounds = new google.maps.LatLngBounds(
-          new google.maps.LatLng(35.0, 139.0),
-          new google.maps.LatLng(36.0, 140.0)
-        );
+        // 検索候補を表示するコンテナを作成
+        const searchBox = searchInput.closest('.property-map-search-box');
+        if (searchBox && !searchSuggestionsContainer) {
+          searchSuggestionsContainer = document.createElement('div');
+          searchSuggestionsContainer.id = 'search-suggestions-container';
+          searchSuggestionsContainer.style.cssText = `
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10001;
+            margin-top: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            display: none;
+          `;
+          searchBox.style.position = 'relative';
+          searchBox.appendChild(searchSuggestionsContainer);
+        }
         
-        // 検索ボックスを初期化（初期boundsはデフォルト、後で更新される）
-        searchAutocomplete = new google.maps.places.Autocomplete(searchInput, {
-          bounds: defaultBounds,
-          strictBounds: false, // 初期状態ではstrictBoundsを無効化（後で更新時に有効化）
-          componentRestrictions: { country: 'jp' },
-          fields: ['geometry', 'name', 'formatted_address']
-        });
+        // 入力イベントのデバウンス用
+        let debounceTimer = null;
         
-        // 検索結果が選択された時の処理
-        searchAutocomplete.addListener('place_changed', function() {
-          const place = searchAutocomplete.getPlace();
+        // 入力イベントリスナー
+        searchInput.addEventListener('input', function() {
+          const query = this.value.trim();
           
-          if (!place.geometry || !place.geometry.location) {
-            console.warn('選択された場所に位置情報がありません');
-            alert('選択された場所に位置情報がありません');
+          // デバウンス（300ms待機）
+          clearTimeout(debounceTimer);
+          
+          if (query.length < 1) {
+            if (searchSuggestionsContainer) {
+              searchSuggestionsContainer.style.display = 'none';
+            }
             return;
           }
           
-          // マップの中心を選択された場所に移動
-          propertyMap.setCenter(place.geometry.location);
-          propertyMap.setZoom(15);
-          
-          // 選択された場所にマーカーを表示（一時的）
-          if (window.searchMarker) {
-            window.searchMarker.setMap(null);
+          debounceTimer = setTimeout(() => {
+            performSearch(query);
+          }, 300);
+        });
+        
+        // 検索ボックス外をクリックしたら候補を非表示
+        document.addEventListener('click', function(e) {
+          if (!searchBox.contains(e.target)) {
+            if (searchSuggestionsContainer) {
+              searchSuggestionsContainer.style.display = 'none';
+            }
           }
+        });
+      }
+      
+      // カスタム検索を実行する関数
+      function performSearch(query) {
+        if (!autocompleteService || !searchCenterLocation) {
+          console.warn('AutocompleteServiceまたは検索中心位置が設定されていません');
+          return;
+        }
+        
+        const request = {
+          input: query,
+          location: searchCenterLocation,
+          radius: searchRadiusMeters,
+          componentRestrictions: { country: 'jp' },
+          types: ['establishment', 'geocode'] // 施設と地理的位置の両方を検索
+        };
+        
+        autocompleteService.getPlacePredictions(request, (predictions, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            displaySearchSuggestions(predictions);
+          } else {
+            // 検索結果がない場合、候補を非表示
+            if (searchSuggestionsContainer) {
+              searchSuggestionsContainer.style.display = 'none';
+            }
+          }
+        });
+      }
+      
+      // 検索候補を表示する関数
+      function displaySearchSuggestions(predictions) {
+        if (!searchSuggestionsContainer) {
+          return;
+        }
+        
+        // 候補リストをクリア
+        searchSuggestionsContainer.innerHTML = '';
+        
+        // 各候補を表示
+        predictions.forEach((prediction, index) => {
+          const suggestionItem = document.createElement('div');
+          suggestionItem.style.cssText = `
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+          `;
+          suggestionItem.innerHTML = `
+            <div style="font-weight: 600; color: #1a1d2e; margin-bottom: 4px;">${prediction.structured_formatting.main_text}</div>
+            <div style="font-size: 0.85rem; color: #666;">${prediction.structured_formatting.secondary_text || ''}</div>
+          `;
           
-          window.searchMarker = new google.maps.Marker({
-            map: propertyMap,
-            position: place.geometry.location,
-            title: place.name || place.formatted_address
+          // ホバー効果
+          suggestionItem.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f5f5f5';
+          });
+          suggestionItem.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = 'white';
           });
           
-          // インフォウィンドウを表示
-          const infoWindow = new google.maps.InfoWindow();
-          infoWindow.setContent(`
-            <div style="padding: 8px; text-align: center;">
-              <h3 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600;">${place.name || '場所'}</h3>
-              <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e;">${place.formatted_address || ''}</p>
-            </div>
-          `);
-          infoWindow.open(propertyMap, window.searchMarker);
+          // クリック時の処理
+          suggestionItem.addEventListener('click', function() {
+            selectPlace(prediction.place_id);
+          });
+          
+          searchSuggestionsContainer.appendChild(suggestionItem);
+        });
+        
+        // 候補を表示
+        searchSuggestionsContainer.style.display = 'block';
+      }
+      
+      // 場所を選択した時の処理
+      function selectPlace(placeId) {
+        if (!propertyMap) {
+          return;
+        }
+        
+        const placesService = new google.maps.places.PlacesService(propertyMap);
+        placesService.getDetails({ placeId: placeId }, (place, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+            // 検索入力欄の値を更新
+            const searchInput = document.getElementById('property-map-search');
+            if (searchInput) {
+              searchInput.value = place.name || place.formatted_address;
+            }
+            
+            // 候補を非表示
+            if (searchSuggestionsContainer) {
+              searchSuggestionsContainer.style.display = 'none';
+            }
+            
+            // マップの中心を選択された場所に移動
+            if (place.geometry && place.geometry.location) {
+              propertyMap.setCenter(place.geometry.location);
+              propertyMap.setZoom(15);
+              
+              // 選択された場所にマーカーを表示（一時的）
+              if (window.searchMarker) {
+                window.searchMarker.setMap(null);
+              }
+              
+              window.searchMarker = new google.maps.Marker({
+                map: propertyMap,
+                position: place.geometry.location,
+                title: place.name || place.formatted_address
+              });
+              
+              // インフォウィンドウを表示
+              const infoWindow = new google.maps.InfoWindow();
+              infoWindow.setContent(`
+                <div style="padding: 8px; text-align: center;">
+                  <h3 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600;">${place.name || '場所'}</h3>
+                  <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e;">${place.formatted_address || ''}</p>
+                </div>
+              `);
+              infoWindow.open(propertyMap, window.searchMarker);
+            }
+          }
         });
       }
       
@@ -2839,93 +2969,11 @@
             const centerLat = location.lat();
             const centerLng = location.lng();
             
-            // 現在地（最新の物件の住所）を中心として、周辺で検索できるようにboundsを設定
-            // 約5km四方の範囲で検索（緯度・経度の差分で約0.045度 = 約5km）
-            const searchRadius = 0.045;
+            // 検索の中心位置を設定（AutocompleteServiceで使用）
+            searchCenterLocation = new google.maps.LatLng(centerLat, centerLng);
+            searchRadiusMeters = 2000; // 2km以内で検索
             
-            const searchBounds = new google.maps.LatLngBounds(
-              new google.maps.LatLng(centerLat - searchRadius, centerLng - searchRadius),
-              new google.maps.LatLng(centerLat + searchRadius, centerLng + searchRadius)
-            );
-            
-            // Autocompleteを完全に再初期化してboundsを確実に反映
-            const searchInput = document.getElementById('property-map-search');
-            if (searchInput) {
-              // 既存のAutocompleteを完全に削除
-              if (searchAutocomplete) {
-                google.maps.event.clearInstanceListeners(searchInput);
-                // Autocompleteインスタンスを削除
-                searchAutocomplete = null;
-              }
-              
-              // 入力欄の値を保持
-              const currentValue = searchInput.value;
-              
-              // Autocompleteを再初期化（新しいboundsで、bounds内の結果を優先表示）
-              searchAutocomplete = new google.maps.places.Autocomplete(searchInput, {
-                bounds: searchBounds,
-                strictBounds: false, // bounds内の結果を優先表示（bounds外も表示可能）
-                componentRestrictions: { country: 'jp' },
-                fields: ['geometry', 'name', 'formatted_address']
-              });
-              
-              // マップのboundsが変更されたら、Autocompleteのboundsも更新
-              propertyMap.addListener('bounds_changed', function() {
-                const mapBounds = propertyMap.getBounds();
-                if (mapBounds && searchAutocomplete) {
-                  // 最新の物件の住所を中心としたboundsとマップのboundsを組み合わせ
-                  const combinedBounds = new google.maps.LatLngBounds();
-                  combinedBounds.union(searchBounds);
-                  combinedBounds.union(mapBounds);
-                  searchAutocomplete.setBounds(combinedBounds);
-                }
-              });
-              
-              // 検索結果が選択された時の処理を再設定
-              searchAutocomplete.addListener('place_changed', function() {
-                const place = searchAutocomplete.getPlace();
-                
-                if (!place.geometry || !place.geometry.location) {
-                  console.warn('選択された場所に位置情報がありません');
-                  alert('選択された場所に位置情報がありません');
-                  return;
-                }
-                
-                // マップの中心を選択された場所に移動
-                propertyMap.setCenter(place.geometry.location);
-                propertyMap.setZoom(15);
-                
-                // 選択された場所にマーカーを表示（一時的）
-                if (window.searchMarker) {
-                  window.searchMarker.setMap(null);
-                }
-                
-                window.searchMarker = new google.maps.Marker({
-                  map: propertyMap,
-                  position: place.geometry.location,
-                  title: place.name || place.formatted_address
-                });
-                
-                // インフォウィンドウを表示
-                const infoWindow = new google.maps.InfoWindow();
-                infoWindow.setContent(`
-                  <div style="padding: 8px; text-align: center;">
-                    <h3 style="margin: 0 0 4px 0; font-size: 0.95rem; color: #5fb3d3; font-weight: 600;">${place.name || '場所'}</h3>
-                    <p style="margin: 0; font-size: 0.85rem; color: #1a1d2e;">${place.formatted_address || ''}</p>
-                  </div>
-                `);
-                infoWindow.open(propertyMap, window.searchMarker);
-              });
-              
-              // 入力欄の値を復元
-              if (currentValue) {
-                searchInput.value = currentValue;
-              }
-              
-              console.log('検索範囲を更新しました（Autocomplete再初期化、strictBounds有効）:', latestAddress, '中心:', centerLat, centerLng, 'bounds:', searchBounds.toString());
-            } else {
-              console.error('検索入力欄が見つかりません');
-            }
+            console.log('検索範囲を更新しました（AutocompleteService使用）:', latestAddress, '中心:', centerLat, centerLng, '半径:', searchRadiusMeters, 'm');
           } else {
             console.warn('最新の物件の住所を座標に変換できませんでした:', latestAddress, status);
           }
