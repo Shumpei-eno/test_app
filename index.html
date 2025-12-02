@@ -2734,6 +2734,7 @@
         // AutocompleteServiceを初期化
         if (!autocompleteService) {
           autocompleteService = new google.maps.places.AutocompleteService();
+          console.log('AutocompleteServiceを初期化しました');
         }
         
         // 検索候補を表示するコンテナを作成
@@ -2928,9 +2929,9 @@
           return;
         }
         
-        // searchAutocompleteが初期化されていない場合は初期化
-        if (!searchAutocomplete) {
-          console.log('searchAutocompleteが初期化されていないため、初期化します。');
+        // autocompleteServiceが初期化されていない場合は初期化
+        if (!autocompleteService) {
+          console.log('autocompleteServiceが初期化されていないため、初期化します。');
           initSearchBox();
           // 初期化後、少し待ってから再試行
           setTimeout(() => updateSearchBounds(properties), 300);
@@ -2941,12 +2942,9 @@
         const propertiesWithAddress = properties.filter(p => p.address && p.address.trim() !== '');
         
         if (propertiesWithAddress.length === 0) {
-          // 物件がない場合はマップの表示範囲を使用
-          const bounds = propertyMap.getBounds();
-          if (bounds && searchAutocomplete) {
-            searchAutocomplete.setBounds(bounds);
-            console.log('検索範囲をマップの表示範囲に設定しました');
-          }
+          // 物件がない場合は検索中心位置をリセット
+          searchCenterLocation = null;
+          console.log('物件がないため、検索中心位置をリセットしました');
           return;
         }
         
