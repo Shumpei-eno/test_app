@@ -2719,11 +2719,16 @@
         initSearchBox();
       }
       
-      // 検索ボックスを初期化する関数（物件の住所周辺で検索）
+      // 検索ボックスを初期化する関数（最新の物件の住所周辺で検索）
       function initSearchBox() {
         const searchInput = document.getElementById('property-map-search');
         if (!searchInput || typeof google === 'undefined' || !google.maps || !google.maps.places) {
           return;
+        }
+        
+        // 既存のAutocompleteがあれば削除
+        if (searchAutocomplete) {
+          google.maps.event.clearInstanceListeners(searchInput);
         }
         
         // デフォルトのbounds（東京周辺）
@@ -2732,12 +2737,7 @@
           new google.maps.LatLng(36.0, 140.0)
         );
         
-        // 既存のAutocompleteがあれば削除
-        if (searchAutocomplete) {
-          google.maps.event.clearInstanceListeners(searchInput);
-        }
-        
-        // 検索ボックスを初期化（初期boundsはデフォルト）
+        // 検索ボックスを初期化（初期boundsはデフォルト、後で更新される）
         searchAutocomplete = new google.maps.places.Autocomplete(searchInput, {
           bounds: defaultBounds,
           componentRestrictions: { country: 'jp' },
@@ -2781,9 +2781,9 @@
         });
       }
       
-      // 物件の住所周辺で検索できるようにboundsを更新する関数
+      // 最新の物件の住所周辺で検索できるようにboundsを更新する関数
       async function updateSearchBounds(properties) {
-        if (!searchAutocomplete || !propertyMap) {
+        if (!searchAutocomplete || !propertyMap || typeof google === 'undefined' || !google.maps) {
           return;
         }
         
@@ -2799,39 +2799,37 @@
           return;
         }
         
-        // Geocoderを使用して住所を座標に変換
-        const geocoder = new google.maps.Geocoder();
-        const bounds = new google.maps.LatLngBounds();
-        let geocodedCount = 0;
+        // データベースの一番上（最新）の物件の住所を取得
+        const latestProperty = propertiesWithAddress[0]; // 最初の要素が最新（created_at DESCでソートされている）
+        const latestAddress = latestProperty.address;
         
-        propertiesWithAddress.forEach((property) => {
-          geocoder.geocode({ address: property.address }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-              const location = results[0].geometry.location;
-              bounds.extend(new google.maps.LatLng(location.lat(), location.lng()));
-            }
+        if (!latestAddress) {
+          return;
+        }
+        
+        // Geocoderを使用して最新の物件の住所を座標に変換
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: latestAddress }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            const centerLat = location.lat();
+            const centerLng = location.lng();
             
-            geocodedCount++;
+            // 現在地（最新の物件の住所）を中心として、周辺で検索できるようにboundsを設定
+            // 約5km四方の範囲で検索（緯度・経度の差分で約0.045度 = 約5km）
+            const searchRadius = 0.045;
             
-            // 全ての住所を変換し終えたら、検索範囲を更新
-            if (geocodedCount === propertiesWithAddress.length) {
-              // boundsが有効な場合のみ更新
-              if (!bounds.isEmpty()) {
-                // 少し余裕を持たせてboundsを拡張
-                const sw = bounds.getSouthWest();
-                const ne = bounds.getNorthEast();
-                const latDiff = (ne.lat() - sw.lat()) * 0.1;
-                const lngDiff = (ne.lng() - sw.lng()) * 0.1;
-                
-                const expandedBounds = new google.maps.LatLngBounds(
-                  new google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff),
-                  new google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff)
-                );
-                
-                searchAutocomplete.setBounds(expandedBounds);
-              }
-            }
-          });
+            const searchBounds = new google.maps.LatLngBounds(
+              new google.maps.LatLng(centerLat - searchRadius, centerLng - searchRadius),
+              new google.maps.LatLng(centerLat + searchRadius, centerLng + searchRadius)
+            );
+            
+            searchAutocomplete.setBounds(searchBounds);
+            
+            console.log('検索範囲を更新しました:', latestAddress, '中心:', centerLat, centerLng);
+          } else {
+            console.warn('最新の物件の住所を座標に変換できませんでした:', latestAddress, status);
+          }
         });
       }
       
