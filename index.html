@@ -460,6 +460,31 @@
       padding-bottom: 12px;
       border-bottom: 2px solid rgba(95, 179, 211, 0.3);
     }
+    .property-map-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      justify-content: center;
+    }
+    .property-map-tab {
+      padding: 8px 16px;
+      background: rgba(42, 45, 62, 0.8);
+      border: 1px solid rgba(95, 179, 211, 0.3);
+      border-radius: 6px;
+      color: #5fb3d3;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .property-map-tab:hover {
+      background: rgba(95, 179, 211, 0.2);
+      border-color: rgba(95, 179, 211, 0.5);
+    }
+    .property-map-tab.active {
+      background: rgba(95, 179, 211, 0.3);
+      border-color: #5fb3d3;
+      color: #fff;
+    }
     .property-map-container {
       width: 100%;
       height: 450px;
@@ -1542,10 +1567,16 @@
             </div>
             <div class="property-map-wrapper">
               <div class="property-map-title">物件位置マップ</div>
+              <div class="property-map-tabs">
+                <button class="property-map-tab active" id="map-tab" onclick="switchMapView('map')">地図</button>
+                <button class="property-map-tab" id="streetview-tab" onclick="switchMapView('streetview')">ストリートビュー</button>
+              </div>
               <div class="property-map-container" id="property-map">
                 <div class="property-map-search-box">
                   <input type="text" class="property-map-search-input" id="property-map-search" placeholder="場所を検索...">
                 </div>
+              </div>
+              <div class="property-map-container" id="property-streetview" style="display: none;">
               </div>
             </div>
           </div>
@@ -2695,6 +2726,7 @@
       
       // Google Mapsの変数
       let propertyMap = null;
+      let propertyStreetView = null;
       let propertyMarkers = [];
       let geocoder = null;
       let searchAutocomplete = null;
@@ -2702,6 +2734,7 @@
       let searchCenterLocation = null; // 検索の中心位置（最新の物件の住所）
       let searchRadiusMeters = 2000; // 検索半径（メートル）
       let searchSuggestionsContainer = null; // 検索候補を表示するコンテナ
+      let currentStreetViewPosition = null; // 現在のStreet Viewの位置
       
       // Google Mapsを初期化する関数
       function initPropertyMap() {
@@ -2983,6 +3016,60 @@
         initPropertyMap();
       };
       
+      // 地図とStreet Viewを切り替える関数
+      window.switchMapView = function(viewType) {
+        const mapContainer = document.getElementById('property-map');
+        const streetViewContainer = document.getElementById('property-streetview');
+        const mapTab = document.getElementById('map-tab');
+        const streetViewTab = document.getElementById('streetview-tab');
+        
+        if (viewType === 'map') {
+          // 地図を表示
+          if (mapContainer) mapContainer.style.display = 'block';
+          if (streetViewContainer) streetViewContainer.style.display = 'none';
+          if (mapTab) mapTab.classList.add('active');
+          if (streetViewTab) streetViewTab.classList.remove('active');
+        } else if (viewType === 'streetview') {
+          // Street Viewを表示
+          if (mapContainer) mapContainer.style.display = 'none';
+          if (streetViewContainer) streetViewContainer.style.display = 'block';
+          if (mapTab) mapTab.classList.remove('active');
+          if (streetViewTab) streetViewTab.classList.add('active');
+          
+          // Street Viewを初期化（まだ初期化されていない場合）
+          if (!propertyStreetView && streetViewContainer) {
+            initStreetView();
+          } else if (propertyStreetView && currentStreetViewPosition) {
+            // 既に初期化されている場合は位置を更新
+            propertyStreetView.setPosition(currentStreetViewPosition);
+            propertyStreetView.setPov({
+              heading: 0,
+              pitch: 0
+            });
+          }
+        }
+      };
+      
+      // Street Viewを初期化する関数
+      function initStreetView() {
+        const streetViewContainer = document.getElementById('property-streetview');
+        if (!streetViewContainer || typeof google === 'undefined' || !google.maps) {
+          return;
+        }
+        
+        // デフォルトの位置（東京）または最新の物件の位置
+        const defaultPosition = currentStreetViewPosition || { lat: 35.6762, lng: 139.6503 };
+        
+        propertyStreetView = new google.maps.StreetViewPanorama(streetViewContainer, {
+          position: defaultPosition,
+          pov: {
+            heading: 0,
+            pitch: 0
+          },
+          zoom: 1
+        });
+      }
+      
       // 物件マップを更新する関数
       function updatePropertyMap(properties) {
         if (!propertyMap) {
@@ -3056,6 +3143,19 @@
               // マーカーからマウスアウト時にインフォウィンドウを閉じる
               marker.addListener('mouseout', () => {
                 infoWindow.close();
+              });
+              
+              // マーカーをクリックした時にStreet Viewの位置を更新
+              marker.addListener('click', () => {
+                currentStreetViewPosition = position;
+                // Street Viewが既に初期化されている場合は位置を更新
+                if (propertyStreetView) {
+                  propertyStreetView.setPosition(position);
+                  propertyStreetView.setPov({
+                    heading: 0,
+                    pitch: 0
+                  });
+                }
               });
               
               propertyMarkers.push(marker);
