@@ -464,9 +464,9 @@
       width: 100%;
       height: 450px;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: hidden; /* 地図の境界を維持 */
       border: 1px solid rgba(95, 179, 211, 0.2);
-      position: relative;
+      position: relative; /* 検索バーを絶対配置するための基準 */
     }
     .property-map-container iframe {
       width: 100%;
@@ -1542,11 +1542,10 @@
             </div>
             <div class="property-map-wrapper">
               <div class="property-map-title">物件位置マップ</div>
-              <div style="position: relative;">
+              <div class="property-map-container" id="property-map">
                 <div class="property-map-search-box">
                   <input type="text" class="property-map-search-input" id="property-map-search" placeholder="場所を検索...">
                 </div>
-                <div class="property-map-container" id="property-map"></div>
               </div>
             </div>
           </div>
@@ -2752,10 +2751,11 @@
             border-radius: 4px;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 10001;
+            z-index: 10001; /* 検索バーの上に表示 */
             margin-top: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             display: none;
+            max-width: 100%; /* 検索バーの幅を超えないように */
           `;
           searchBox.style.position = 'relative';
           searchBox.appendChild(searchSuggestionsContainer);
